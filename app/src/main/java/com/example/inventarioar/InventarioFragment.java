@@ -2,57 +2,45 @@ package com.example.inventarioar;
 
 import android.os.Bundle;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
+import android.widget.Toast;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link InventarioFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
+import com.example.inventarioar.Adaptadores.ProductoAdapter;
+import com.example.inventarioar.models.Producto;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
+
+import java.util.ArrayList;
+import java.util.List;
+
+
 public class InventarioFragment extends Fragment {
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private RecyclerView rvInventario;
+    private ProductoAdapter adapter;
+    private List<Producto> listaProductos;
+    private DatabaseReference databaseReference;
+    private ProgressBar progressBar;
 
     public InventarioFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment InventarioFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static InventarioFragment newInstance(String param1, String param2) {
-        InventarioFragment fragment = new InventarioFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
-    }
-
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
@@ -60,5 +48,46 @@ public class InventarioFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_inventario, container, false);
+    }
+
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        rvInventario = view.findViewById(R.id.rvInventario);
+        progressBar = view.findViewById(R.id.progressBarInventario);
+        rvInventario.setLayoutManager(new LinearLayoutManager(getContext()));
+
+        listaProductos = new ArrayList<>();
+        adapter = new ProductoAdapter(listaProductos);
+        rvInventario.setAdapter(adapter);
+
+        databaseReference = FirebaseDatabase.getInstance().getReference("Productos");
+
+        cargarProductos();
+    }
+
+    private void cargarProductos(){
+        databaseReference.addValueEventListener(new ValueEventListener() {
+            @Override
+            public void onDataChange(@NonNull DataSnapshot snapshot) {
+                listaProductos.clear(); // limpiar lista antes de llenar para no duplicar datos
+
+                for (DataSnapshot dataSnapshot : snapshot.getChildren()){
+                    Producto producto = dataSnapshot.getValue(Producto.class);
+                    if (producto != null){
+                        listaProductos.add(producto);
+                    }
+                }
+                adapter.notifyDataSetChanged();
+                progressBar.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onCancelled(@NonNull DatabaseError error) {
+                progressBar.setVisibility(View.GONE);
+                Toast.makeText(getContext(), "Error al cargar el inventario: " + error.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 }
