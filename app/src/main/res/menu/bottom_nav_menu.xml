@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/homeFragment"
+        android:icon="@drawable/ic_home"
+        android:title="Inicio" />
+
+    <item
+        android:id="@+id/inventarioFragment"
+        android:icon="@drawable/ic_inventory"
+        android:title="Inventario" />
+
+    <item
+        android:id="@+id/gestionFragment"
+        android:icon="@drawable/ic_gestion"
+        android:title="Gestión" />
+
+    <item
+        android:id="@+id/ARScannerFragment"
+        android:icon="@drawable/ic_camera"
+        android:title="Escáner" />
+
+</menu>
