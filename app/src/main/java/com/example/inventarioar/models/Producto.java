@@ -1,5 +1,7 @@
 package com.example.inventarioar.models;
 
+import java.util.HashMap;
+
 public class Producto {
     private String id;
     private String nombre;
@@ -8,8 +10,10 @@ public class Producto {
     private double precio;
     private int stock;
 
+
     private String imagenUrl;
     private String modelo3DUrl;
+    private HashMap<String, Integer> stockPorSucursal;
 
     public Producto() {
     }
@@ -23,69 +27,34 @@ public class Producto {
         this.stock = stock;
         this.imagenUrl = "";
         this.modelo3DUrl = "";
+        this.stockPorSucursal = new HashMap<>();
     }
 
-    public String getId() {
-        return id;
-    }
+    // --- GETTERS Y SETTERS ---
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
 
-    public void setId(String id) {
-        this.id = id;
-    }
+    public String getNombre() { return nombre; }
+    public void setNombre(String nombre) { this.nombre = nombre; }
 
-    public String getNombre() {
-        return nombre;
-    }
+    public String getCategoria() { return categoria; }
+    public void setCategoria(String categoria) { this.categoria = categoria; }
 
-    public void setNombre(String nombre) {
-        this.nombre = nombre;
-    }
+    public String getDescripcion() { return descripcion; }
+    public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
 
-    public String getCategoria() {
-        return categoria;
-    }
+    public double getPrecio() { return precio; }
+    public void setPrecio(double precio) { this.precio = precio; }
 
-    public void setCategoria(String categoria) {
-        this.categoria = categoria;
-    }
+    public int getStock() { return stock; }
+    public void setStock(int stock) { this.stock = stock; }
 
-    public String getDescripcion() {
-        return descripcion;
-    }
+    public String getImagenUrl() { return imagenUrl; }
+    public void setImagenUrl(String imagenUrl) { this.imagenUrl = imagenUrl; }
 
-    public void setDescripcion(String descripcion) {
-        this.descripcion = descripcion;
-    }
+    public String getModelo3DUrl() { return modelo3DUrl; }
+    public void setModelo3DUrl(String modelo3DUrl) { this.modelo3DUrl = modelo3DUrl; }
 
-    public double getPrecio() {
-        return precio;
-    }
-
-    public void setPrecio(double precio) {
-        this.precio = precio;
-    }
-
-    public int getStock() {
-        return stock;
-    }
-
-    public void setStock(int stock) {
-        this.stock = stock;
-    }
-
-    public String getImagenUrl() {
-        return imagenUrl;
-    }
-
-    public void setImagenUrl(String imagenUrl) {
-        this.imagenUrl = imagenUrl;
-    }
-
-    public String getModelo3DUrl() {
-        return modelo3DUrl;
-    }
-
-    public void setModelo3DUrl(String modelo3DUrl) {
-        this.modelo3DUrl = modelo3DUrl;
-    }
+    public HashMap<String, Integer> getStockPorSucursal() { return stockPorSucursal; }
+    public void setStockPorSucursal(HashMap<String, Integer> stockPorSucursal) { this.stockPorSucursal = stockPorSucursal; }
 }
