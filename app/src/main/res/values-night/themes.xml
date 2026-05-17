@@ -4,7 +4,9 @@
         <!-- Customize your dark theme here. -->
         <!-- <item name="colorPrimary">@color/my_dark_primary</item> -->
 
-        <item name="colorPrimary">#90CAF9</item>
-        <item name="colorSecondary">#80CBC4</item>
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorSecondary">@color/secondary</item>
     </style>
+
+    <style name="Theme.InventarioAR" parent="Base.Theme.InventarioAR" />
 </resources>

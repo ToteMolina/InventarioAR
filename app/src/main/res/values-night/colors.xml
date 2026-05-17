@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="primary">#1C1C23</color>
+    <color name="primary_variant">#2C2C35</color>
+    <color name="secondary">#26A69A</color>
+    <color name="secondary_variant">#00796B</color>
+    <color name="text_primary">#F4F3EE</color>
+    <color name="text_secondary">#8E8E93</color>
+    <color name="icono_off">#8E8E93</color>
+    <color name="icono_on">#90CAF9</color>
+</resources>
