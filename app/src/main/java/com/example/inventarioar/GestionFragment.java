@@ -10,6 +10,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -23,7 +24,7 @@ import com.google.firebase.database.FirebaseDatabase;
 public class GestionFragment extends Fragment {
 
     private TextInputEditText txtNombre, txtDescripcion, txtPrecio, txtStock;
-    private Spinner spCategoria;
+    private AutoCompleteTextView spCategoria;
     private MaterialButton btnGuardar;
 
     private DatabaseReference databaseReference;
@@ -64,7 +65,7 @@ public class GestionFragment extends Fragment {
                 "Herramientas",
                 "Otros"
         };
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_dropdown_item, categorias);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, categorias);
         spCategoria.setAdapter(adapter);
 
         btnGuardar.setOnClickListener(v->validarYGuardar());
@@ -76,7 +77,7 @@ public class GestionFragment extends Fragment {
         String descripcion = txtDescripcion.getText().toString().trim();
         String precioStr = txtPrecio.getText().toString().trim();
         String stockStr = txtStock.getText().toString().trim();
-        String categoria = spCategoria.getSelectedItem().toString();
+        String categoria = spCategoria.getText().toString();
 
         if (nombre.isEmpty()) {
             txtNombre.setError("El nombre es obligatorio");
@@ -123,7 +124,7 @@ public class GestionFragment extends Fragment {
         txtDescripcion.setText("");
         txtPrecio.setText("");
         txtStock.setText("");
-        spCategoria.setSelection(0);
+        spCategoria.setText("Mobiliario", false);
         txtNombre.requestFocus();
     }
 }

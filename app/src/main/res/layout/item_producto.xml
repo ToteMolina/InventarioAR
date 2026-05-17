@@ -4,10 +4,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="16dp"
     android:layout_marginVertical="8dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="4dp">
+    app:cardCornerRadius="40dp"
+    android:backgroundTint="@color/primary_variant">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -20,7 +19,6 @@
             android:id="@+id/imgProductoItem"
             android:layout_width="64dp"
             android:layout_height="64dp"
-            android:background="#F5F5F5"
             android:src="@drawable/ic_inventory"
             app:tint="#9E9E9E" />
 
@@ -29,6 +27,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="16dp"
+            android:layout_marginEnd="16dp"
             android:orientation="vertical">
 
             <TextView
@@ -62,14 +61,16 @@
                     android:text="$0.00"
                     android:textSize="16sp"
                     android:textStyle="bold"
-                    android:textColor="#388E3C" /> <TextView
-                android:id="@+id/tvItemStock"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Stock: 0"
-                android:textSize="14sp"
-                android:textStyle="bold"
-                android:textColor="?android:attr/textColorSecondary"/>
+                    android:textColor="@color/secondary_variant" />
+
+                <TextView
+                    android:id="@+id/tvItemStock"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Stock: 0"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="?android:attr/textColorSecondary"/>
             </LinearLayout>
         </LinearLayout>
     </LinearLayout>

@@ -18,22 +18,23 @@
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="4dp">
+        app:cardCornerRadius="40dp">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="24dp"
-            android:gravity="center">
+            android:gravity="center"
+            android:background="@color/primary_variant"
+            >
 
             <ImageView
                 android:layout_width="64dp"
                 android:layout_height="64dp"
                 android:src="@android:drawable/ic_menu_mylocation"
                 android:layout_marginBottom="16dp"
-                app:tint="#1976D2"/> <TextView
+                app:tint="@color/secondary"/> <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="Contexto de Sucursal"
@@ -56,7 +57,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:text="Detectar Ubicación"
-                app:cornerRadius="8dp" />
+                android:backgroundTint="@color/secondary"
+                app:cornerRadius="40dp"
+                />
 
         </LinearLayout>
 
