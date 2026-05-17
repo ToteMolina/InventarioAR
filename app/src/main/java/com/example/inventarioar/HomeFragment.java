@@ -88,7 +88,7 @@ public class HomeFragment extends Fragment {
         }
     }
 
-    @SuppressLint("MissingPermission") // le decimos a android que ignore, ya que arriba lo validamos
+    @SuppressLint("MissingPermission")
     private void obtenerUbicacion(){
         tvCoordenadas.setText("Buscando ubicación...");
 
@@ -113,31 +113,42 @@ public class HomeFragment extends Fragment {
                         float distanciaFMO = location.distanceTo(ubiFMO);
 
                         String sucursalActual = "";
+                        String sucursalCernana = "";
+                        float distanciaCercana = 0;
 
                         float kmAMetrocentro = distanciaMetro / 1000.0f;
-
                         float kmACentro = distanciaCentro / 1000.0f;
-
                         float kmAFMO = distanciaFMO / 1000.0f;
 
-                        if (distanciaMetro < 1500) {
+                        if (distanciaMetro <= distanciaCentro && distanciaMetro <= distanciaFMO) {
+                            sucursalCernana = "Metrocentro San Miguel";
                             String kmFormateados = String.format("%.1f", kmAMetrocentro);
                             sucursalActual = "sucursal_metrocentro";
-                            tvCoordenadas.setText("Ubicación: Metrocentro San Miguel\n(Distancia: " + kmFormateados + " km de la sucursal)");
-                        } else if (distanciaCentro < 1500) {
+                            distanciaCercana = distanciaMetro;
+                        } else if (distanciaCentro <= distanciaFMO && distanciaCentro <= distanciaMetro) {
                             String kmFormateados = String.format("%.1f", kmACentro);
                             sucursalActual = "sucursal_centro";
-                            tvCoordenadas.setText("Ubicación: Sucursal Centro\n(Distancia: " + kmFormateados + " km de la sucursal)");
-                        } else if (distanciaFMO < 1500) {
+                            distanciaCercana = distanciaCentro;
+                            sucursalCernana = "Sucursal Centro";
+                        } else if (distanciaFMO <= distanciaMetro && distanciaFMO <= distanciaFMO) {
                             String kmFormateados = String.format("%.1f", kmAFMO);
                             sucursalActual = "sucursal_fmo";
-                            tvCoordenadas.setText("Ubicación: Facultad Multidisciplinaria Oriental - UES \n(Distancia: " + kmFormateados + " km de la sucursal)");
-                        } else {
-                            String kmFormateados = String.format("%.1f", kmAMetrocentro);
-                            sucursalActual = "sucursal_metrocentro"; // Predeterminada
-                            tvCoordenadas.setText("Ubicación: Metrocentro San Miguel (Predeterminada)\nEstás a " + kmFormateados + " km de la sucursal.");
+                            distanciaCercana = distanciaFMO;
+                            sucursalCernana = "Facultad Muldisciplaniria Oriental - UES";
+                        }
+                        if(distanciaCercana < 500){
+                            tvCoordenadas.setText("Ubicación Actual: " + sucursalCernana + "\n" +
+                                    "(Estás aquí mismo, a " + (int)distanciaCercana + " metros)");
+                        }
+                        else {
+                            float kmFinales = distanciaCercana / 1000.0f;
+                            String kmFormateados = String.format("%.1f", kmFinales);
+
+                            tvCoordenadas.setText("Sucursal más cercana: " + sucursalCernana + "\n" +
+                                    "Estás a " + kmFormateados + " km de distancia.");
                         }
                     }
+
                     else {
                         tvCoordenadas.setText("Ubicación no disponible en este momento.");
                     }
