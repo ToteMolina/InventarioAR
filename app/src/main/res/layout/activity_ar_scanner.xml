@@ -23,7 +23,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|center_horizontal"
         android:layout_marginBottom="32dp"
-        android:text="Regresar"
+        android:text="Cerrar Escáner"
         app:cornerRadius="24dp" />
 
 </FrameLayout>

@@ -19,6 +19,7 @@ import android.widget.Toast;
 import com.example.inventarioar.Adaptadores.ProductoAdapter;
 import com.example.inventarioar.models.Producto;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import com.google.android.material.button.MaterialButton;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
@@ -67,6 +68,16 @@ public class InventarioFragment extends Fragment {
             NavHostFragment.findNavController(this).navigate(R.id.gestionFragment);
         });
 
+        MaterialButton btnEscanear = view.findViewById(R.id.btnEscanearUniversal);
+
+// 2. Le damos la orden de abrir la ventana de Realidad Aumentada
+        if (btnEscanear != null) {
+            btnEscanear.setOnClickListener(v -> {
+                // El "Intent" es el mensajero de Android que abre nuevas ventanas
+                android.content.Intent intent = new android.content.Intent(getContext(), activity_ar_scanner.class);
+                startActivity(intent);
+            });
+        }
 
         listaProductos = new ArrayList<>();
         adapter = new ProductoAdapter(listaProductos);
