@@ -20,12 +20,14 @@ import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.cloudinary.android.MediaManager;
 import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
 import com.example.inventarioar.models.Producto;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
@@ -41,7 +43,7 @@ public class GestionFragment extends Fragment {
     private AutoCompleteTextView spCategoria;
     private MaterialButton btnGuardar, btnGaleria, btnCamara, btnSeleccionarModelo;
     private TextView tvEstadoArchivos;
-
+    private FloatingActionButton btnRegresar;
     private DatabaseReference databaseReference;
 
     private Uri uriImagen = null;
@@ -122,6 +124,7 @@ public class GestionFragment extends Fragment {
         btnCamara = view.findViewById(R.id.btnCamara);
         btnSeleccionarModelo = view.findViewById(R.id.btnSeleccionarModelo);
         tvEstadoArchivos = view.findViewById(R.id.tvEstadoArchivos);
+        btnRegresar = view.findViewById(R.id.btnRegresar);
 
         databaseReference = FirebaseDatabase.getInstance().getReference("Productos");
 
@@ -139,6 +142,7 @@ public class GestionFragment extends Fragment {
         btnCamara.setOnClickListener(v -> validarYAbriCamara());
         btnSeleccionarModelo.setOnClickListener(v -> selectorModelo.launch("*/*"));
         btnGuardar.setOnClickListener(v -> validarYIniciarSubida());
+        btnRegresar.setOnClickListener(v-> NavHostFragment.findNavController(this).navigateUp());
     }
 
     private void abrirGaleria() {
@@ -271,7 +275,7 @@ public class GestionFragment extends Fragment {
         String id = databaseReference.push().getKey();
 
         HashMap<String, Integer> stockGPS = new HashMap<>();
-        stockGPS.put("sucursal_metrocentro", stock);
+        stockGPS.put("bodega_central", stock);
 
         Producto nuevoProducto = new Producto(id, nombre, categoria, descripcion, precio, stock);
         nuevoProducto.setImagenUrl(urlFotoCloudinary);

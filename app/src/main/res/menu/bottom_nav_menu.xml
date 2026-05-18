@@ -12,9 +12,9 @@
         android:title="Inventario" />
 
     <item
-        android:id="@+id/gestionFragment"
-        android:icon="@drawable/ic_gestion"
-        android:title="Gestión" />
+        android:id="@+id/despachoFragment"
+        android:icon="@drawable/ic_despacho"
+        android:title="Despacho" />
 
     <item
         android:id="@+id/ARScannerFragment"

@@ -35,6 +35,17 @@
             android:layout_gravity="center"
             android:visibility="visible" />
 
+        <com.google.android.material.floatingactionbutton.FloatingActionButton
+            android:id="@+id/btnAgregarProducto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="16dp"
+            android:contentDescription="Registrar producto"
+            app:backgroundTint="@color/secondary"
+            app:tint="@color/white"
+            app:srcCompat="@android:drawable/ic_input_add" />
+
     </FrameLayout>
 
 </LinearLayout>

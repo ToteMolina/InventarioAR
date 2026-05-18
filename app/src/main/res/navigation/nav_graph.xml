@@ -21,6 +21,11 @@
         tools:layout="@layout/fragment_gestion" />
 
     <fragment
+        android:id="@+id/despachoFragment"
+        android:name="com.example.inventarioar.DespachoFragment"
+        tools:layout="@layout/fragment_despacho" />
+
+    <fragment
         android:id="@+id/ARScannerFragment"
         android:name="com.example.inventarioar.ARScannerFragment"
         tools:layout="@layout/fragment_a_r_scanner" />
