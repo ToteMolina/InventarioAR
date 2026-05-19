@@ -24,6 +24,8 @@
         android:layout_gravity="bottom|center_horizontal"
         android:layout_marginBottom="32dp"
         android:text="Cerrar Escáner"
-        app:cornerRadius="24dp" />
+        android:backgroundTint="@color/secondary"
+        android:textColor="@color/white"
+        app:cornerRadius="32dp" />
 
 </FrameLayout>

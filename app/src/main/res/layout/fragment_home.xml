@@ -25,7 +25,7 @@
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="40dp"
+            app:cardCornerRadius="32dp"
             app:cardBackgroundColor="@color/primary_variant"
             app:strokeWidth="0dp"
             android:layout_marginBottom="16dp">
@@ -75,7 +75,9 @@
                     android:layout_height="wrap_content"
                     android:backgroundTint="@color/secondary"
                     android:text="Detectar"
-                    app:cornerRadius="40dp" />
+                    android:textColor="@color/white"
+                    app:cornerRadius="32dp"
+                    />
 
             </LinearLayout>
 

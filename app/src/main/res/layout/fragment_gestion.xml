@@ -6,11 +6,9 @@
     android:layout_height="match_parent"
     android:background="@color/primary">
 
-    <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:app="http://schemas.android.com/apk/res-auto"
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        xmlns:tools="http://schemas.android.com/tools"
         android:background="@color/primary"
         android:fillViewport="true">
 
@@ -85,10 +83,10 @@
                 app:boxBackgroundColor="@color/primary_variant"
                 app:boxStrokeWidth="0dp"
                 app:boxStrokeWidthFocused="2dp"
-                app:boxCornerRadiusTopStart="24dp"
-                app:boxCornerRadiusTopEnd="24dp"
-                app:boxCornerRadiusBottomStart="24dp"
-                app:boxCornerRadiusBottomEnd="24dp"
+                app:boxCornerRadiusTopStart="32dp"
+                app:boxCornerRadiusTopEnd="32dp"
+                app:boxCornerRadiusBottomStart="32dp"
+                app:boxCornerRadiusBottomEnd="32dp"
                 app:hintTextColor="@color/text_primary">
 
                 <com.google.android.material.textfield.TextInputEditText
@@ -97,8 +95,7 @@
                     android:layout_height="wrap_content"
                     android:hint="Descripción"
                     android:textColorHint="@color/text_secondary"
-                    android:inputType="textMultiLine"
-                    android:lines="3" />
+                    android:inputType="textMultiLine" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <LinearLayout
@@ -224,8 +221,9 @@
                 android:text="Guardar Producto"
                 android:textSize="18sp"
                 android:textStyle="bold"
+                android:textColor="@color/white"
                 android:backgroundTint="@color/secondary"
-                app:cornerRadius="40dp" />
+                app:cornerRadius="32dp" />
 
         </LinearLayout>
     </ScrollView>

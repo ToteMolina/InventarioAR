@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginVertical="8dp"
-    app:cardCornerRadius="40dp"
+    app:cardCornerRadius="32dp"
     android:backgroundTint="@color/primary_variant">
 
     <LinearLayout
@@ -20,7 +20,7 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             android:src="@drawable/ic_inventory"
-            app:tint="#9E9E9E" />
+            app:tint="@color/text_secondary" />
 
         <LinearLayout
             android:layout_width="0dp"

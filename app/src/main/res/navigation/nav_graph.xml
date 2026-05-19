@@ -8,12 +8,15 @@
     <fragment
         android:id="@+id/homeFragment"
         android:name="com.example.inventarioar.HomeFragment"
-        tools:layout="@layout/fragment_home" />
+        android:label="Panel Principal"
+        tools:layout="@layout/fragment_home"
+        />
 
     <fragment
         android:id="@+id/inventarioFragment"
         android:name="com.example.inventarioar.InventarioFragment"
-        tools:layout="@layout/fragment_inventario" />
+        tools:layout="@layout/fragment_inventario"
+        android:label="Inventario"/>
 
     <fragment
         android:id="@+id/gestionFragment"
@@ -23,11 +26,7 @@
     <fragment
         android:id="@+id/despachoFragment"
         android:name="com.example.inventarioar.DespachoFragment"
-        tools:layout="@layout/fragment_despacho" />
-
-    <fragment
-        android:id="@+id/ARScannerFragment"
-        android:name="com.example.inventarioar.ARScannerFragment"
-        tools:layout="@layout/fragment_a_r_scanner" />
+        tools:layout="@layout/fragment_despacho"
+        android:label="Despacho"/>
 
 </navigation>

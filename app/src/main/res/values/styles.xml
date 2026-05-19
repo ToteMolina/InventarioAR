@@ -14,9 +14,14 @@
 
     <style name="FondoPildoraMenu" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">
         <item name="android:color">@color/primary</item>
-        <item name="shapeAppearance">@style/ShapeAppearance.Material3.Corner.Full</item>
+        <item name="shapeAppearance">@style/ShapeIndicadorNav</item>
         <item name="android:width">56dp</item>
         <item name="android:height">56dp</item>
+    </style>
+
+    <style name="ShapeIndicadorNav" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
     </style>
 
     <style name="ActiveIndicatorInvisible" parent="Widget.Material3.BottomNavigationView.ActiveIndicator">

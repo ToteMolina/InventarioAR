@@ -16,9 +16,4 @@
         android:icon="@drawable/ic_despacho"
         android:title="Despacho" />
 
-    <item
-        android:id="@+id/ARScannerFragment"
-        android:icon="@drawable/ic_camera"
-        android:title="Escáner" />
-
 </menu>
