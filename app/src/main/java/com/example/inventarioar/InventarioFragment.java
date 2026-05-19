@@ -4,6 +4,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -70,7 +71,7 @@ public class InventarioFragment extends Fragment {
 
         MaterialButton btnEscanear = view.findViewById(R.id.btnEscanearUniversal);
 
-// 2. Le damos la orden de abrir la ventana de Realidad Aumentada
+//      Le damos la orden de abrir la ventana de Realidad Aumentada
         if (btnEscanear != null) {
             btnEscanear.setOnClickListener(v -> {
                 // El "Intent" es el mensajero de Android que abre nuevas ventanas
@@ -80,7 +81,29 @@ public class InventarioFragment extends Fragment {
         }
 
         listaProductos = new ArrayList<>();
-        adapter = new ProductoAdapter(listaProductos);
+        adapter = new ProductoAdapter(listaProductos, new ProductoAdapter.OnProductoListener() {
+            @Override
+            public void onEditar(Producto producto) {
+                Bundle args = new Bundle();
+                args.putString("productoId", producto.getId());
+                NavHostFragment.findNavController(InventarioFragment.this)
+                        .navigate(R.id.gestionFragment, args);
+            }
+
+            @Override
+            public void onEliminar(Producto producto) {
+                new AlertDialog.Builder(requireContext())
+                        .setTitle("Eliminar producto")
+                        .setMessage("¿Está seguro que desea eliminar " + producto.getNombre() + "?")
+                        .setPositiveButton("Eliminar", (dialog, which) -> {
+                            FirebaseDatabase.getInstance().getReference("Productos")
+                                    .child(producto.getId())
+                                    .removeValue();
+                        })
+                        .setNegativeButton("Cancelar", null)
+                        .show();
+            }
+        });
         rvInventario.setAdapter(adapter);
 
         databaseReference = FirebaseDatabase.getInstance().getReference("Productos");

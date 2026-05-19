@@ -6,6 +6,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.inventarioar.R;
@@ -15,9 +16,15 @@ import java.util.List;
 
 public class ProductoAdapter extends RecyclerView.Adapter<ProductoAdapter.ProductoVH> {
     private List<Producto> listaProductos;
+    private OnProductoListener listener;
+    public interface OnProductoListener{
+        void onEditar(Producto producto);
+        void onEliminar(Producto producto);
+    }
 
-    public ProductoAdapter(List<Producto> listaProductos) {
+    public ProductoAdapter(List<Producto> listaProductos, OnProductoListener listener) {
         this.listaProductos = listaProductos;
+        this.listener = listener;
     }
 
     @NonNull
@@ -36,6 +43,16 @@ public class ProductoAdapter extends RecyclerView.Adapter<ProductoAdapter.Produc
         holder.tvPrecio.setText(String.format("$%.2f", producto.getPrecio()));
         holder.tvStock.setText("Stock: " + producto.getStock());
 
+        holder.itemView.setOnLongClickListener(v->{
+            new AlertDialog.Builder(v.getContext())
+                    .setTitle(producto.getNombre())
+                    .setItems(new String[]{"Editar", "Eliminar"}, (dialog, which)->{
+                        if (which == 0) listener.onEditar(producto);
+                        else listener.onEliminar(producto);
+                    })
+                    .show();
+            return true;
+        });
     }
 
     @Override

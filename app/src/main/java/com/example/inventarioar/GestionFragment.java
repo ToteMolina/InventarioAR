@@ -29,8 +29,11 @@ import com.example.inventarioar.models.Producto;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -114,6 +117,7 @@ public class GestionFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+
         txtNombre = view.findViewById(R.id.txtNombre);
         txtDescripcion = view.findViewById(R.id.txtDescripcion);
         txtPrecio = view.findViewById(R.id.txtPrecio);
@@ -125,6 +129,33 @@ public class GestionFragment extends Fragment {
         btnSeleccionarModelo = view.findViewById(R.id.btnSeleccionarModelo);
         tvEstadoArchivos = view.findViewById(R.id.tvEstadoArchivos);
         btnRegresar = view.findViewById(R.id.btnRegresar);
+
+        String productoId = getArguments() != null ? getArguments().getString("productoId") : null;
+
+        if (productoId != null){
+            FirebaseDatabase.getInstance().getReference("Productos")
+                    .child(productoId)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            Producto p = snapshot.getValue(Producto.class);
+                            if (p != null){
+                                txtNombre.setText(p.getNombre());
+                                txtDescripcion.setText(p.getDescripcion());
+                                txtPrecio.setText(String.valueOf(p.getPrecio()));
+                                txtStock.setText(String.valueOf(p.getStock()));
+                                spCategoria.setText(p.getCategoria(), false);
+                                btnGuardar.setText("Actualizar producto");
+                                btnGuardar.setTag(productoId); // guardar el id para usarlo al actualizar
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+
+                        }
+                    });
+        }
 
         databaseReference = FirebaseDatabase.getInstance().getReference("Productos");
 
@@ -141,7 +172,7 @@ public class GestionFragment extends Fragment {
         btnGaleria.setOnClickListener(v -> abrirGaleria());
         btnCamara.setOnClickListener(v -> validarYAbriCamara());
         btnSeleccionarModelo.setOnClickListener(v -> selectorModelo.launch("*/*"));
-        btnGuardar.setOnClickListener(v -> validarYIniciarSubida());
+        btnGuardar.setOnClickListener(v -> validarIniciarSubida());
         btnRegresar.setOnClickListener(v-> NavHostFragment.findNavController(this).navigateUp());
     }
 
@@ -195,13 +226,15 @@ public class GestionFragment extends Fragment {
         }
     }
 
-    private void validarYIniciarSubida() {
+    private void validarIniciarSubida() {
         String nombre = txtNombre.getText().toString().trim();
         String precioStr = txtPrecio.getText().toString().trim();
         String stockStr = txtStock.getText().toString().trim();
         String categoria = spCategoria.getText().toString();
+        String idExistente = btnGuardar.getTag() != null ? (String) btnGuardar.getTag() : null;
+        String id = idExistente != null ? idExistente : databaseReference.push().getKey();
 
-        if (nombre.isEmpty() || precioStr.isEmpty() || stockStr.isEmpty() || uriImagen == null || uriModelo == null) {
+        if (nombre.isEmpty() || precioStr.isEmpty() || stockStr.isEmpty() || categoria.isEmpty() || uriImagen == null || uriModelo == null) {
             Toast.makeText(getContext(), "Completa el formulario y selecciona ambos archivos", Toast.LENGTH_SHORT).show();
             return;
         }
@@ -272,7 +305,8 @@ public class GestionFragment extends Fragment {
         int stock = Integer.parseInt(txtStock.getText().toString().trim());
         String categoria = spCategoria.getText().toString();
 
-        String id = databaseReference.push().getKey();
+        String idExistente = btnGuardar.getTag() != null ? (String) btnGuardar.getTag() : null;
+        String id = idExistente != null ? idExistente : databaseReference.push().getKey();
 
         HashMap<String, Integer> stockGPS = new HashMap<>();
         stockGPS.put("bodega_central", stock);
@@ -285,8 +319,9 @@ public class GestionFragment extends Fragment {
         if (id != null) {
             databaseReference.child(id).setValue(nuevoProducto)
                     .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(getContext(), "¡Producto y multimedia registrados!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getContext(), idExistente != null ? "¡Producto actualizado!" : "¡Producto registrado!", Toast.LENGTH_LONG).show();
                         limpiarFormulario();
+//                        NavHostFragment.findNavController(GestionFragment.this).navigateUp();
                     });
         }
     }
