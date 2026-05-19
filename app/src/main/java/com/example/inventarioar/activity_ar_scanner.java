@@ -13,6 +13,7 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
@@ -46,10 +47,11 @@ public class activity_ar_scanner extends AppCompatActivity {
 
     private ArFragment arFragment;
     private ProgressBar loadingProgressBar;
-
     private HashMap<String, String> diccionarioProductos = new HashMap<>();
     private HashMap<String, TransformableNode> modelosColocados = new HashMap<>();
     private float ultimoToqueX = 0;
+    private float inicioToqueX = 0;
+    private float inicioToqueY = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,13 +60,9 @@ public class activity_ar_scanner extends AppCompatActivity {
 
         loadingProgressBar = findViewById(R.id.loadingProgressBar);
         MaterialButton btnCerrar = findViewById(R.id.btnCerrarAR);
-
-        if (btnCerrar != null) {
-            btnCerrar.setOnClickListener(v -> finish());
-        }
+        if (btnCerrar != null) btnCerrar.setOnClickListener(v -> finish());
 
         arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.arFragment);
-
         if (arFragment != null) {
             arFragment.setOnSessionConfigurationListener(this::configurarMotorDeImagenes);
             arFragment.getArSceneView().getScene().addOnUpdateListener(this::vigilarCamara);
@@ -72,194 +70,130 @@ public class activity_ar_scanner extends AppCompatActivity {
     }
 
     private void configurarMotorDeImagenes(Session session, Config config) {
-        config.setPlaneFindingMode(Config.PlaneFindingMode.DISABLED);
+        config.setPlaneFindingMode(Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL);
         config.setFocusMode(Config.FocusMode.AUTO);
-
         loadingProgressBar.setVisibility(View.VISIBLE);
 
-        DatabaseReference ref = FirebaseDatabase.getInstance().getReference("Productos");
-
-        ref.addListenerForSingleValueEvent(new ValueEventListener() {
+        FirebaseDatabase.getInstance().getReference("Productos").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-
                 ExecutorService executor = Executors.newSingleThreadExecutor();
                 Handler handler = new Handler(Looper.getMainLooper());
-
                 executor.execute(() -> {
-                    android.util.Log.d("AR_DEBUG", "1. INICIANDO CEREBRO DE AR...");
                     AugmentedImageDatabase baseDeDatosVisual = new AugmentedImageDatabase(session);
-
-                    int contador = 1;
-
                     for (DataSnapshot productoSnap : snapshot.getChildren()) {
                         String id = productoSnap.child("id").getValue(String.class);
                         String imagenUrl = productoSnap.child("imagenUrl").getValue(String.class);
                         String modelo3DUrl = productoSnap.child("modelo3DUrl").getValue(String.class);
-
-                        if (id != null && imagenUrl != null && !imagenUrl.isEmpty()) {
-                            Log.d("AR_DEBUG", "2. Descargando foto #" + contador + " (ID: " + id + ")");
+                        if (id != null && imagenUrl != null) {
                             Bitmap fotoBitmap = descargarImagenDesdeURL(imagenUrl);
-
                             if (fotoBitmap != null) {
-                                try {
-                                    Log.d("AR_DEBUG", "3. Guardando en ARCore...");
-                                    baseDeDatosVisual.addImage(id, fotoBitmap,0.15f);
-                                    diccionarioProductos.put(id, modelo3DUrl);
-
-                                    // 🚨 LA CURA DEFINITIVA: Destruir la foto original para salvar la RAM 🚨
-                                    fotoBitmap.recycle();
-
-                                   Log.d("AR_DEBUG", "4. ¡Foto guardada y RAM liberada con éxito!");
-                                } catch (Exception e) {
-                                    Log.e("AR_DEBUG", "Error al procesar la foto en ARCore: " + e.getMessage());
-                                }
+                                baseDeDatosVisual.addImage(id, fotoBitmap, 0.15f);
+                                diccionarioProductos.put(id, modelo3DUrl);
+                                fotoBitmap.recycle();
                             }
                         }
-                        contador++;
                     }
-
-                   Log.d("AR_DEBUG", "5. TODAS LAS FOTOS LISTAS. ENCENDIENDO CÁMARA...");
-
                     handler.post(() -> {
-                        if (isDestroyed() || isFinishing()) return;
-                        try {
-                            config.setAugmentedImageDatabase(baseDeDatosVisual);
-                            session.configure(config);
-                            loadingProgressBar.setVisibility(View.GONE);
-                            Log.d("AR_DEBUG", "6. ¡ÉXITO TOTAL!");
-                            Toast.makeText(activity_ar_scanner.this, "Escáner listo. Apunta a la imagen.", Toast.LENGTH_LONG).show();
-                        } catch (Exception e) {
-                            Log.e("AR_DEBUG", "Error encendiendo cámara: " + e.getMessage());
-                        }
+                        if (isDestroyed()) return;
+                        config.setAugmentedImageDatabase(baseDeDatosVisual);
+                        session.configure(config);
+                        loadingProgressBar.setVisibility(View.GONE);
                     });
                 });
             }
-
             @Override
-            public void onCancelled(@androidx.annotation.NonNull com.google.firebase.database.DatabaseError error) {
-                loadingProgressBar.setVisibility(View.GONE);
-            }
+            public void onCancelled(@NonNull com.google.firebase.database.DatabaseError error) { loadingProgressBar.setVisibility(View.GONE); }
         });
     }
 
     private Bitmap descargarImagenDesdeURL(String urlString) {
-        HttpURLConnection connection = null;
-        InputStream input = null;
         try {
-            URL url = new URL(urlString);
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setDoInput(true);
+            HttpURLConnection connection = (HttpURLConnection) new URL(urlString).openConnection();
             connection.connect();
-            input = connection.getInputStream();
-
-            return BitmapFactory.decodeStream(input);
-
-        } catch (Exception e) {
-            return null;
-        } finally {
-
-            try {
-                if (input != null) input.close();
-                if (connection != null) connection.disconnect();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
+            return BitmapFactory.decodeStream(connection.getInputStream());
+        } catch (Exception e) { return null; }
     }
 
     private void vigilarCamara(FrameTime frameTime) {
         Frame frame = arFragment.getArSceneView().getArFrame();
         if (frame == null) return;
-
-        Collection<AugmentedImage> imagenesDetectadas = frame.getUpdatedTrackables(AugmentedImage.class);
-
-        for (AugmentedImage imagen : imagenesDetectadas) {
-            String idDelProducto = imagen.getName();
-
-            if (imagen.getTrackingState() == TrackingState.PAUSED) {
-              Log.d("AR_DEBUG", "Mmm... veo algo parecido a [" + idDelProducto + "] pero estoy calculando...");
-            }
-
-
-            else if (imagen.getTrackingState() == TrackingState.TRACKING) {
-
-                if (!modelosColocados.containsKey(idDelProducto)) {
-                    String urlDelModelo3D = diccionarioProductos.get(idDelProducto);
-
-                   Log.d("AR_DEBUG", "Su URL 3D es: " + urlDelModelo3D);
-
-                    if (urlDelModelo3D != null && !urlDelModelo3D.isEmpty()) {
-                        modelosColocados.put(idDelProducto, null);
-                        descargarYColocarModelo(imagen, urlDelModelo3D, idDelProducto);
-                    }
+        for (AugmentedImage imagen : frame.getUpdatedTrackables(AugmentedImage.class)) {
+            if (imagen.getTrackingState() == TrackingState.TRACKING && !modelosColocados.containsKey(imagen.getName())) {
+                String url = diccionarioProductos.get(imagen.getName());
+                if (url != null) {
+                    modelosColocados.put(imagen.getName(), null);
+                    descargarYColocarModelo(imagen, url, imagen.getName());
                 }
             }
         }
     }
 
     private void descargarYColocarModelo(AugmentedImage imagenDetectada, String modeloURL, String idProducto) {
-        runOnUiThread(() -> loadingProgressBar.setVisibility(View.VISIBLE));
-
-        ModelRenderable.builder()
-                .setSource(this, Uri.parse(modeloURL))
-                .setIsFilamentGltf(true)
-                .build()
+        ModelRenderable.builder().setSource(this, Uri.parse(modeloURL)).setIsFilamentGltf(true).build()
                 .thenAccept(modelRenderable -> {
-                    runOnUiThread(() -> loadingProgressBar.setVisibility(View.GONE));
-
                     AnchorNode anchorNode = new AnchorNode(imagenDetectada.createAnchor(imagenDetectada.getCenterPose()));
                     anchorNode.setParent(arFragment.getArSceneView().getScene());
-
 
                     TransformableNode transformNode = new TransformableNode(arFragment.getTransformationSystem());
                     transformNode.setParent(anchorNode);
                     transformNode.setRenderable(modelRenderable);
 
+                    // --- AJUSTES DE ZOOM (ScaleController) ---
+                    transformNode.getScaleController().setEnabled(true);
                     transformNode.getScaleController().setMinScale(0.001f);
                     transformNode.getScaleController().setMaxScale(2.0f);
                     transformNode.setLocalScale(new Vector3(0.01f, 0.01f, 0.01f));
 
+                    // --- POSTURA ---
+                    transformNode.setLocalRotation(Quaternion.axisAngle(new Vector3(1.0f, 0.0f, 0.0f), -90.0f));
+                    transformNode.getRotationController().setEnabled(false); // Usamos nuestro listener para rotación manual
 
-                    transformNode.setLocalRotation(Quaternion.axisAngle(
-                            new Vector3(1.0f, 0.0f, 0.0f), -90.0f));
-
-                    transformNode.getRotationController().setEnabled(false);
-
-
+                    // --- HITTEST Y GESTOS ---
                     transformNode.setOnTouchListener((hitTestResult, motionEvent) -> {
                         switch (motionEvent.getAction()) {
                             case MotionEvent.ACTION_DOWN:
-
                                 ultimoToqueX = motionEvent.getX();
+                                inicioToqueX = motionEvent.getX();
+                                inicioToqueY = motionEvent.getY();
                                 return true;
-
                             case MotionEvent.ACTION_MOVE:
-
-                                float toqueActualX = motionEvent.getX();
-                                float deltaX = toqueActualX - ultimoToqueX;
-                                ultimoToqueX = toqueActualX;
-
-                               Quaternion rotacionDelta =
-                                        Quaternion.axisAngle(
-                                                new Vector3(0.0f, 1.0f, 0.0f), // Eje vertical Y
-                                                deltaX * 0.5f);
-                                transformNode.setLocalRotation(
-                                        Quaternion.multiply(
-                                                transformNode.getLocalRotation(),
-                                                rotacionDelta
-                                        ));
+                                // Rotación con 1 dedo
+                                if (motionEvent.getPointerCount() == 1) {
+                                    float deltaX = motionEvent.getX() - ultimoToqueX;
+                                    ultimoToqueX = motionEvent.getX();
+                                    Quaternion rotacionDelta = Quaternion.axisAngle(new Vector3(0.0f, 1.0f, 0.0f), deltaX * 0.5f);
+                                    transformNode.setLocalRotation(Quaternion.multiply(transformNode.getLocalRotation(), rotacionDelta));
+                                }
+                                return true;
+                            case MotionEvent.ACTION_UP:
+                                float movX = Math.abs(motionEvent.getX() - inicioToqueX);
+                                float movY = Math.abs(motionEvent.getY() - inicioToqueY);
+                                if (movX < 15 && movY < 15) mostrarInformacionDelProducto(idProducto);
                                 return true;
                         }
                         return false;
                     });
-
                     transformNode.select();
                     modelosColocados.put(idProducto, transformNode);
-                })
-                .exceptionally(throwable -> {
-                    runOnUiThread(() -> loadingProgressBar.setVisibility(View.GONE));
-                    return null;
+                });
+    }
+
+    private void mostrarInformacionDelProducto(String idProducto) {
+        FirebaseDatabase.getInstance().getReference("Productos").orderByChild("id").equalTo(idProducto)
+                .addListenerForSingleValueEvent(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(@NonNull DataSnapshot snapshot) {
+                        for (DataSnapshot data : snapshot.getChildren()) {
+                            new AlertDialog.Builder(activity_ar_scanner.this)
+                                    .setTitle("Detalle: " + data.child("nombre").getValue(String.class))
+                                    .setMessage("Precio: $" + String.valueOf(data.child("precio").getValue()) +
+                                            "\nStock: " + String.valueOf(data.child("stock").getValue()))
+                                    .setPositiveButton("Cerrar", null).show();
+                        }
+                    }
+                    @Override
+                    public void onCancelled(@NonNull com.google.firebase.database.DatabaseError error) {}
                 });
     }
 }
