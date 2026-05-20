@@ -19,7 +19,8 @@
             android:layout_width="64dp"
             android:layout_height="64dp"
             app:cardCornerRadius="24dp"
-            app:cardElevation="0dp" android:layout_gravity="center_vertical">
+            app:cardElevation="0dp"
+            android:layout_gravity="center_vertical">
 
             <ImageView
                 android:id="@+id/imgProductoItem"
