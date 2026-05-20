@@ -10,6 +10,7 @@ import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -17,6 +18,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.ar.core.AugmentedImage;
 import com.google.ar.core.AugmentedImageDatabase;
 import com.google.ar.core.Config;
@@ -28,6 +30,7 @@ import com.google.ar.sceneform.FrameTime;
 import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
+import com.google.ar.sceneform.rendering.ViewRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
 import com.google.firebase.database.DataSnapshot;
@@ -52,6 +55,8 @@ public class activity_ar_scanner extends AppCompatActivity {
     private float ultimoToqueX = 0;
     private float inicioToqueX = 0;
     private float inicioToqueY = 0;
+    private float ultimoToqueY = 0;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,38 +77,71 @@ public class activity_ar_scanner extends AppCompatActivity {
     private void configurarMotorDeImagenes(Session session, Config config) {
         config.setPlaneFindingMode(Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL);
         config.setFocusMode(Config.FocusMode.AUTO);
-        loadingProgressBar.setVisibility(View.VISIBLE);
+        config.setLightEstimationMode(Config.LightEstimationMode.DISABLED);
+
+        View loadingLayout = findViewById(R.id.loadingLayout);
+        loadingLayout.setVisibility(View.VISIBLE);
 
         FirebaseDatabase.getInstance().getReference("Productos").addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(@NonNull DataSnapshot snapshot) {
-                ExecutorService executor = Executors.newSingleThreadExecutor();
+                int totalProductos = (int) snapshot.getChildrenCount();
+
+                if (totalProductos == 0) {
+                    loadingLayout.setVisibility(View.GONE);
+                    return;
+                }
+
+
+                ExecutorService executor = Executors.newFixedThreadPool(4);
+                java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(totalProductos);
                 Handler handler = new Handler(Looper.getMainLooper());
-                executor.execute(() -> {
-                    AugmentedImageDatabase baseDeDatosVisual = new AugmentedImageDatabase(session);
-                    for (DataSnapshot productoSnap : snapshot.getChildren()) {
-                        String id = productoSnap.child("id").getValue(String.class);
-                        String imagenUrl = productoSnap.child("imagenUrl").getValue(String.class);
-                        String modelo3DUrl = productoSnap.child("modelo3DUrl").getValue(String.class);
-                        if (id != null && imagenUrl != null) {
-                            Bitmap fotoBitmap = descargarImagenDesdeURL(imagenUrl);
-                            if (fotoBitmap != null) {
-                                baseDeDatosVisual.addImage(id, fotoBitmap, 0.15f);
-                                diccionarioProductos.put(id, modelo3DUrl);
-                                fotoBitmap.recycle();
+                AugmentedImageDatabase baseDeDatosVisual = new AugmentedImageDatabase(session);
+
+                for (DataSnapshot productoSnap : snapshot.getChildren()) {
+                    executor.execute(() -> {
+                        try {
+                            String id = productoSnap.child("id").getValue(String.class);
+                            String imagenUrl = productoSnap.child("imagenUrl").getValue(String.class);
+                            String modelo3DUrl = productoSnap.child("modelo3DUrl").getValue(String.class);
+
+                            if (id != null && imagenUrl != null) {
+                                Bitmap fotoBitmap = descargarImagenDesdeURL(imagenUrl);
+                                if (fotoBitmap != null) {
+                                    synchronized (baseDeDatosVisual) {
+                                        baseDeDatosVisual.addImage(id, fotoBitmap, 0.15f);
+                                        diccionarioProductos.put(id, modelo3DUrl);
+                                    }
+                                    fotoBitmap.recycle();
+                                }
                             }
+                        } finally {
+                            latch.countDown();
                         }
-                    }
-                    handler.post(() -> {
-                        if (isDestroyed()) return;
-                        config.setAugmentedImageDatabase(baseDeDatosVisual);
-                        session.configure(config);
-                        loadingProgressBar.setVisibility(View.GONE);
                     });
-                });
+                }
+                new Thread(() -> {
+                    try {
+                        latch.await();
+                        handler.post(() -> {
+                            if (isDestroyed()) return;
+                            config.setAugmentedImageDatabase(baseDeDatosVisual);
+                            session.configure(config);
+
+                            // Ocultamos la ruedita
+                            loadingLayout.setVisibility(View.GONE);
+                            Toast.makeText(activity_ar_scanner.this, "Inventario listo", Toast.LENGTH_SHORT).show();
+                        });
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }).start();
             }
+
             @Override
-            public void onCancelled(@NonNull com.google.firebase.database.DatabaseError error) { loadingProgressBar.setVisibility(View.GONE); }
+            public void onCancelled(@NonNull com.google.firebase.database.DatabaseError error) {
+                loadingLayout.setVisibility(View.GONE);
+            }
         });
     }
 
@@ -139,41 +177,102 @@ public class activity_ar_scanner extends AppCompatActivity {
                     transformNode.setParent(anchorNode);
                     transformNode.setRenderable(modelRenderable);
 
-                    // --- AJUSTES DE ZOOM (ScaleController) ---
+         
+                    View infoView = View.inflate(this, R.layout.ar_label_producto, null);
+                    TextView txtNombre = infoView.findViewById(R.id.txtNombre);
+                    TextView txtDetalles = infoView.findViewById(R.id.txtDetalles);
+
+
+                    txtNombre.setText("Cargando nombre...");
+                    txtDetalles.setText("Buscando precio...");
+
+
+                    FirebaseDatabase.getInstance().getReference("Productos").orderByChild("id").equalTo(idProducto)
+                            .addListenerForSingleValueEvent(new ValueEventListener() {
+                                @Override
+                                public void onDataChange(@NonNull DataSnapshot snapshot) {
+                                    for (DataSnapshot data : snapshot.getChildren()) {
+                                        // Obtenemos los datos reales
+                                        String nombreReal = data.child("nombre").getValue(String.class);
+                                        String precioReal = String.valueOf(data.child("precio").getValue());
+                                        Integer stockReal = data.child("stock").getValue(Integer.class);
+
+                                        if (stockReal == null) {
+                                            stockReal = 0;
+                                        }
+                                        // Actualizamos la etiqueta flotante 3D
+                                        txtNombre.setText(nombreReal);
+                                        txtDetalles.setText("Precio: $" + precioReal +"\n" +
+                                            "Stock: " + stockReal);
+                                    }
+                                }
+                                @Override
+                                public void onCancelled(@NonNull com.google.firebase.database.DatabaseError error) {}
+                            });
+
+                    ViewRenderable.builder().setView(this, infoView).build()
+                            .thenAccept(viewRenderable -> {
+                                TransformableNode textNode = new TransformableNode(arFragment.getTransformationSystem());
+                                textNode.setParent(transformNode);
+                                textNode.setRenderable(viewRenderable);
+                                textNode.setLocalPosition(new Vector3(0.0f, 0.3f, 0.2f));
+                                textNode.getScaleController().setEnabled(false);
+                                textNode.getRotationController().setEnabled(false);
+                                textNode.getTranslationController().setEnabled(false);
+                                textNode.setLocalScale(new Vector3(1f, 1f, 1f));
+                            });
+
+
                     transformNode.getScaleController().setEnabled(true);
-                    transformNode.getScaleController().setMinScale(0.001f);
+                    transformNode.getScaleController().setMinScale(0.01f);
                     transformNode.getScaleController().setMaxScale(2.0f);
-                    transformNode.setLocalScale(new Vector3(0.01f, 0.01f, 0.01f));
 
-                    // --- POSTURA ---
-                    transformNode.setLocalRotation(Quaternion.axisAngle(new Vector3(1.0f, 0.0f, 0.0f), -90.0f));
-                    transformNode.getRotationController().setEnabled(false); // Usamos nuestro listener para rotación manual
 
-                    // --- HITTEST Y GESTOS ---
+                    transformNode.getRotationController().setEnabled(false); // Apagamos el nativo para usar el giro libre 3D
+
                     transformNode.setOnTouchListener((hitTestResult, motionEvent) -> {
+
+                        if (motionEvent.getPointerCount() > 1) {
+                            return false;
+                        }
+
                         switch (motionEvent.getAction()) {
                             case MotionEvent.ACTION_DOWN:
+
                                 ultimoToqueX = motionEvent.getX();
+                                ultimoToqueY = motionEvent.getY();
                                 inicioToqueX = motionEvent.getX();
                                 inicioToqueY = motionEvent.getY();
                                 return true;
+
                             case MotionEvent.ACTION_MOVE:
-                                // Rotación con 1 dedo
-                                if (motionEvent.getPointerCount() == 1) {
-                                    float deltaX = motionEvent.getX() - ultimoToqueX;
-                                    ultimoToqueX = motionEvent.getX();
-                                    Quaternion rotacionDelta = Quaternion.axisAngle(new Vector3(0.0f, 1.0f, 0.0f), deltaX * 0.5f);
-                                    transformNode.setLocalRotation(Quaternion.multiply(transformNode.getLocalRotation(), rotacionDelta));
-                                }
+                                float deltaX = motionEvent.getX() - ultimoToqueX;
+                                float deltaY = motionEvent.getY() - ultimoToqueY;
+
+                                ultimoToqueX = motionEvent.getX();
+                                ultimoToqueY = motionEvent.getY();
+
+                                Quaternion rotacionY = Quaternion.axisAngle(new Vector3(0.0f, 1.0f, 0.0f), deltaX * 0.5f);
+                                Quaternion rotacionX = Quaternion.axisAngle(new Vector3(1.0f, 0.0f, 0.0f), deltaY * 0.5f);
+                                Quaternion rotacionTotal = Quaternion.multiply(rotacionX, rotacionY);
+
+                                transformNode.setLocalRotation(Quaternion.multiply(transformNode.getLocalRotation(), rotacionTotal));
                                 return true;
+
                             case MotionEvent.ACTION_UP:
                                 float movX = Math.abs(motionEvent.getX() - inicioToqueX);
                                 float movY = Math.abs(motionEvent.getY() - inicioToqueY);
-                                if (movX < 15 && movY < 15) mostrarInformacionDelProducto(idProducto);
+
+
+                                if (movX < 15 && movY < 15) {
+                                    mostrarInformacionDelProducto(idProducto);
+                                }
                                 return true;
                         }
                         return false;
                     });
+
+
                     transformNode.select();
                     modelosColocados.put(idProducto, transformNode);
                 });
@@ -185,7 +284,7 @@ public class activity_ar_scanner extends AppCompatActivity {
                     @Override
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         for (DataSnapshot data : snapshot.getChildren()) {
-                            new AlertDialog.Builder(activity_ar_scanner.this)
+                            new MaterialAlertDialogBuilder(activity_ar_scanner.this)
                                     .setTitle("Detalle: " + data.child("nombre").getValue(String.class))
                                     .setMessage("Precio: $" + String.valueOf(data.child("precio").getValue()) +
                                             "\nStock: " + String.valueOf(data.child("stock").getValue()))

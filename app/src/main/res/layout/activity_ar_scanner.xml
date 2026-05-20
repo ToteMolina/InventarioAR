@@ -10,13 +10,27 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <ProgressBar
-        android:id="@+id/loadingProgressBar"
+    <LinearLayout
+        android:id="@+id/loadingLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:visibility="gone" />
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone">
 
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Cargando inventario..."
+            android:textColor="@android:color/black"
+            android:textStyle="bold" />
+    </LinearLayout>
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btnCerrarAR"
         android:layout_width="wrap_content"
