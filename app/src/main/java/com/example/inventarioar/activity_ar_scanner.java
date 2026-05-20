@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.ar.core.Anchor;
 import com.google.ar.core.AugmentedImage;
 import com.google.ar.core.AugmentedImageDatabase;
 import com.google.ar.core.Config;
@@ -50,13 +51,15 @@ public class activity_ar_scanner extends AppCompatActivity {
 
     private ArFragment arFragment;
     private ProgressBar loadingProgressBar;
-    private HashMap<String, String> diccionarioProductos = new HashMap<>();
+    private HashMap<String, String[]> diccionarioProductos = new HashMap<>();
     private HashMap<String, TransformableNode> modelosColocados = new HashMap<>();
     private float ultimoToqueX = 0;
     private float inicioToqueX = 0;
     private float inicioToqueY = 0;
     private float ultimoToqueY = 0;
-
+    private String modeloPendienteUrl = null;
+    private String idProductoPendiente = null;
+    private boolean modoColocacion = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,10 +71,29 @@ public class activity_ar_scanner extends AppCompatActivity {
         if (btnCerrar != null) btnCerrar.setOnClickListener(v -> finish());
 
         arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.arFragment);
+
         if (arFragment != null) {
             arFragment.setOnSessionConfigurationListener(this::configurarMotorDeImagenes);
             arFragment.getArSceneView().getScene().addOnUpdateListener(this::vigilarCamara);
+
+
+            arFragment.setOnTapArPlaneListener((hitResult, plane, motionEvent) -> {
+
+                if (modoColocacion && modeloPendienteUrl != null) {
+
+                    Anchor anchorDetectado = hitResult.createAnchor();
+
+
+                    descargarYColocarModeloEnPiso(anchorDetectado, modeloPendienteUrl, idProductoPendiente);
+
+
+                    modoColocacion = false;
+                    modeloPendienteUrl = null;
+                }
+            });
         }
+
+
     }
 
     private void configurarMotorDeImagenes(Session session, Config config) {
@@ -91,8 +113,6 @@ public class activity_ar_scanner extends AppCompatActivity {
                     loadingLayout.setVisibility(View.GONE);
                     return;
                 }
-
-
                 ExecutorService executor = Executors.newFixedThreadPool(4);
                 java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(totalProductos);
                 Handler handler = new Handler(Looper.getMainLooper());
@@ -102,6 +122,7 @@ public class activity_ar_scanner extends AppCompatActivity {
                     executor.execute(() -> {
                         try {
                             String id = productoSnap.child("id").getValue(String.class);
+                            String nombre = productoSnap.child("nombre").getValue(String.class);
                             String imagenUrl = productoSnap.child("imagenUrl").getValue(String.class);
                             String modelo3DUrl = productoSnap.child("modelo3DUrl").getValue(String.class);
 
@@ -110,7 +131,7 @@ public class activity_ar_scanner extends AppCompatActivity {
                                 if (fotoBitmap != null) {
                                     synchronized (baseDeDatosVisual) {
                                         baseDeDatosVisual.addImage(id, fotoBitmap, 0.15f);
-                                        diccionarioProductos.put(id, modelo3DUrl);
+                                        diccionarioProductos.put(id, new String[]{modelo3DUrl, nombre});
                                     }
                                     fotoBitmap.recycle();
                                 }
@@ -128,7 +149,7 @@ public class activity_ar_scanner extends AppCompatActivity {
                             config.setAugmentedImageDatabase(baseDeDatosVisual);
                             session.configure(config);
 
-                            // Ocultamos la ruedita
+
                             loadingLayout.setVisibility(View.GONE);
                             Toast.makeText(activity_ar_scanner.this, "Inventario listo", Toast.LENGTH_SHORT).show();
                         });
@@ -156,36 +177,52 @@ public class activity_ar_scanner extends AppCompatActivity {
     private void vigilarCamara(FrameTime frameTime) {
         Frame frame = arFragment.getArSceneView().getArFrame();
         if (frame == null) return;
+
         for (AugmentedImage imagen : frame.getUpdatedTrackables(AugmentedImage.class)) {
             if (imagen.getTrackingState() == TrackingState.TRACKING && !modelosColocados.containsKey(imagen.getName())) {
-                String url = diccionarioProductos.get(imagen.getName());
-                if (url != null) {
-                    modelosColocados.put(imagen.getName(), null);
-                    descargarYColocarModelo(imagen, url, imagen.getName());
+
+                String idProducto = imagen.getName();
+
+
+                String[] datosProducto = diccionarioProductos.get(idProducto);
+
+                if (datosProducto != null) {
+
+                    String url = datosProducto[0];
+                    String nombreReal = datosProducto[1];
+
+                    modeloPendienteUrl = url;
+                    idProductoPendiente = idProducto;
+                    modoColocacion = true;
+
+                    modelosColocados.put(idProductoPendiente, null);
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, "¡" + nombreReal + " detectado! Toca los puntos blancos en el piso.", Toast.LENGTH_LONG).show();
+                    });
                 }
             }
         }
     }
 
-    private void descargarYColocarModelo(AugmentedImage imagenDetectada, String modeloURL, String idProducto) {
+    private void descargarYColocarModeloEnPiso(Anchor anchorDetectado, String modeloURL, String idProducto) {
         ModelRenderable.builder().setSource(this, Uri.parse(modeloURL)).setIsFilamentGltf(true).build()
                 .thenAccept(modelRenderable -> {
-                    AnchorNode anchorNode = new AnchorNode(imagenDetectada.createAnchor(imagenDetectada.getCenterPose()));
+
+
+                    AnchorNode anchorNode = new AnchorNode(anchorDetectado);
                     anchorNode.setParent(arFragment.getArSceneView().getScene());
 
                     TransformableNode transformNode = new TransformableNode(arFragment.getTransformationSystem());
                     transformNode.setParent(anchorNode);
                     transformNode.setRenderable(modelRenderable);
 
-         
+
                     View infoView = View.inflate(this, R.layout.ar_label_producto, null);
                     TextView txtNombre = infoView.findViewById(R.id.txtNombre);
                     TextView txtDetalles = infoView.findViewById(R.id.txtDetalles);
 
-
                     txtNombre.setText("Cargando nombre...");
                     txtDetalles.setText("Buscando precio...");
-
 
                     FirebaseDatabase.getInstance().getReference("Productos").orderByChild("id").equalTo(idProducto)
                             .addListenerForSingleValueEvent(new ValueEventListener() {
@@ -200,7 +237,7 @@ public class activity_ar_scanner extends AppCompatActivity {
                                         if (stockReal == null) {
                                             stockReal = 0;
                                         }
-                                        // Actualizamos la etiqueta flotante 3D
+
                                         txtNombre.setText(nombreReal);
                                         txtDetalles.setText("Precio: $" + precioReal +"\n" +
                                             "Stock: " + stockReal);
@@ -215,7 +252,7 @@ public class activity_ar_scanner extends AppCompatActivity {
                                 TransformableNode textNode = new TransformableNode(arFragment.getTransformationSystem());
                                 textNode.setParent(transformNode);
                                 textNode.setRenderable(viewRenderable);
-                                textNode.setLocalPosition(new Vector3(0.0f, 0.3f, 0.2f));
+                                textNode.setLocalPosition(new Vector3(0.0f, 0.5f, 0.3f));
                                 textNode.getScaleController().setEnabled(false);
                                 textNode.getRotationController().setEnabled(false);
                                 textNode.getTranslationController().setEnabled(false);
@@ -227,47 +264,50 @@ public class activity_ar_scanner extends AppCompatActivity {
                     transformNode.getScaleController().setMinScale(0.01f);
                     transformNode.getScaleController().setMaxScale(2.0f);
 
-
-                    transformNode.getRotationController().setEnabled(false); // Apagamos el nativo para usar el giro libre 3D
+                    transformNode.getTranslationController().setEnabled(true);
+                    transformNode.getRotationController().setEnabled(false);
 
                     transformNode.setOnTouchListener((hitTestResult, motionEvent) -> {
+                        int cantidadDedos = motionEvent.getPointerCount();
 
-                        if (motionEvent.getPointerCount() > 1) {
-                            return false;
-                        }
-
-                        switch (motionEvent.getAction()) {
+                        switch (motionEvent.getActionMasked()) {
                             case MotionEvent.ACTION_DOWN:
-
-                                ultimoToqueX = motionEvent.getX();
-                                ultimoToqueY = motionEvent.getY();
                                 inicioToqueX = motionEvent.getX();
                                 inicioToqueY = motionEvent.getY();
-                                return true;
-
+                                return false;
+                            case MotionEvent.ACTION_POINTER_DOWN:
+                                if (cantidadDedos == 2) {
+                                    ultimoToqueX = motionEvent.getX(0);
+                                    ultimoToqueY = motionEvent.getY(0);
+                                }
+                                return false;
                             case MotionEvent.ACTION_MOVE:
-                                float deltaX = motionEvent.getX() - ultimoToqueX;
-                                float deltaY = motionEvent.getY() - ultimoToqueY;
+                                if (cantidadDedos == 2) {
 
-                                ultimoToqueX = motionEvent.getX();
-                                ultimoToqueY = motionEvent.getY();
+                                    float deltaX = motionEvent.getX(0) - ultimoToqueX;
+                                    float deltaY = motionEvent.getY(0) - ultimoToqueY;
 
-                                Quaternion rotacionY = Quaternion.axisAngle(new Vector3(0.0f, 1.0f, 0.0f), deltaX * 0.5f);
-                                Quaternion rotacionX = Quaternion.axisAngle(new Vector3(1.0f, 0.0f, 0.0f), deltaY * 0.5f);
-                                Quaternion rotacionTotal = Quaternion.multiply(rotacionX, rotacionY);
+                                    ultimoToqueX = motionEvent.getX(0);
+                                    ultimoToqueY = motionEvent.getY(0);
 
-                                transformNode.setLocalRotation(Quaternion.multiply(transformNode.getLocalRotation(), rotacionTotal));
-                                return true;
+                                    Quaternion rotacionY = Quaternion.axisAngle(new Vector3(0.0f, 1.0f, 0.0f), deltaX * 0.2f);
+                                    Quaternion rotacionX = Quaternion.axisAngle(new Vector3(1.0f, 0.0f, 0.0f), deltaY * 0.2f);
+                                    Quaternion rotacionTotal = Quaternion.multiply(rotacionX, rotacionY);
+
+                                    transformNode.setLocalRotation(Quaternion.multiply(transformNode.getLocalRotation(), rotacionTotal));
+                                }
+                                return false;
 
                             case MotionEvent.ACTION_UP:
+
                                 float movX = Math.abs(motionEvent.getX() - inicioToqueX);
                                 float movY = Math.abs(motionEvent.getY() - inicioToqueY);
 
-
                                 if (movX < 15 && movY < 15) {
                                     mostrarInformacionDelProducto(idProducto);
+                                    return true;
                                 }
-                                return true;
+                                return false;
                         }
                         return false;
                     });
