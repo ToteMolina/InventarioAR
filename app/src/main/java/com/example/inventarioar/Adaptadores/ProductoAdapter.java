@@ -3,12 +3,14 @@ package com.example.inventarioar.Adaptadores;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.inventarioar.R;
 import com.example.inventarioar.models.Producto;
 
@@ -43,6 +45,12 @@ public class ProductoAdapter extends RecyclerView.Adapter<ProductoAdapter.Produc
         holder.tvPrecio.setText(String.format("$%.2f", producto.getPrecio()));
         holder.tvStock.setText("Stock: " + producto.getStock());
 
+        Glide.with(holder.itemView.getContext())
+                        .load(producto.getImagenUrl())
+                        .placeholder(R.drawable.ic_inventory)
+                        .error(R.drawable.ic_inventory)
+                        .into(holder.imgProducto);
+
         holder.itemView.setOnLongClickListener(v->{
             new AlertDialog.Builder(v.getContext())
                     .setTitle(producto.getNombre())
@@ -62,12 +70,14 @@ public class ProductoAdapter extends RecyclerView.Adapter<ProductoAdapter.Produc
 
     public class ProductoVH extends RecyclerView.ViewHolder {
         TextView tvNombre, tvCategoria, tvPrecio, tvStock;
+        ImageView imgProducto;
         public ProductoVH(@NonNull View itemView) {
             super(itemView);
             tvNombre = itemView.findViewById(R.id.tvItemNombre);
             tvCategoria = itemView.findViewById(R.id.tvItemCategoria);
             tvPrecio = itemView.findViewById(R.id.tvItemPrecio);
             tvStock = itemView.findViewById(R.id.tvItemStock);
+            imgProducto = itemView.findViewById(R.id.imgProductoItem);
         }
     }
 }
