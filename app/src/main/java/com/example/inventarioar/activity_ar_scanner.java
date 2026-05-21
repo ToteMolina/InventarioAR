@@ -29,6 +29,7 @@ import com.google.ar.core.TrackingState;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.FrameTime;
 import com.google.ar.sceneform.Node;
+import com.google.ar.sceneform.collision.Box;
 import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
@@ -36,6 +37,7 @@ import com.google.ar.sceneform.rendering.ViewRenderable;
 import com.google.ar.sceneform.ux.ArFragment;
 import com.google.ar.sceneform.ux.TransformableNode;
 import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
@@ -169,7 +171,7 @@ public class activity_ar_scanner extends AppCompatActivity {
             }
 
             @Override
-            public void onCancelled(@NonNull com.google.firebase.database.DatabaseError error) {
+            public void onCancelled(@NonNull DatabaseError error) {
                 loadingLayout.setVisibility(View.GONE);
             }
         });
@@ -224,9 +226,11 @@ public class activity_ar_scanner extends AppCompatActivity {
     }
 
     private void descargarYColocarModeloEnPiso(Anchor anchorDetectado, String modeloURL, String idProducto) {
-        ModelRenderable.builder().setSource(this, Uri.parse(modeloURL)).setIsFilamentGltf(true).build()
+        ModelRenderable.builder()
+                .setSource(this, Uri.parse(modeloURL))
+                .setIsFilamentGltf(true)
+                .build()
                 .thenAccept(modelRenderable -> {
-
 
                     AnchorNode anchorNode = new AnchorNode(anchorDetectado);
                     anchorNode.setParent(arFragment.getArSceneView().getScene());
@@ -235,7 +239,32 @@ public class activity_ar_scanner extends AppCompatActivity {
                     transformNode.setParent(anchorNode);
                     transformNode.setRenderable(modelRenderable);
 
+                    // 1. NORMALIZACIÓN DE TAMAÑO Y CÁLCULO DEL "TECHO"
+                    float alturaLocalDelTecho = 0.1f; 
 
+                    Box collisionBox = (Box) modelRenderable.getCollisionShape();
+                    if (collisionBox != null) {
+                        Vector3 size = collisionBox.getSize();
+                        Vector3 center = collisionBox.getCenter();
+
+
+                        alturaLocalDelTecho = center.y + (size.y / 2f);
+
+
+                        float ladoMasGrande = Math.max(size.x, Math.max(size.y, size.z));
+                        float escalaCalculada = 0.4f / ladoMasGrande;
+
+                        transformNode.setLocalScale(new Vector3(escalaCalculada, escalaCalculada, escalaCalculada));
+
+
+                        transformNode.getScaleController().setEnabled(true);
+                        transformNode.getScaleController().setMinScale(escalaCalculada * 0.5f);
+                        transformNode.getScaleController().setMaxScale(escalaCalculada * 3.0f);
+                    }
+
+                    final float techoOriginal = alturaLocalDelTecho;
+
+                    // 2. PREPARAMOS EL LETRERO Y SUS DATO
                     View infoView = View.inflate(this, R.layout.ar_label_producto, null);
                     TextView txtNombre = infoView.findViewById(R.id.txtNombre);
                     TextView txtDetalles = infoView.findViewById(R.id.txtDetalles);
@@ -248,48 +277,40 @@ public class activity_ar_scanner extends AppCompatActivity {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                                     for (DataSnapshot data : snapshot.getChildren()) {
-
                                         String nombreReal = data.child("nombre").getValue(String.class);
                                         String precioReal = String.valueOf(data.child("precio").getValue());
                                         Integer stockReal = data.child("stock").getValue(Integer.class);
-
-                                        if (stockReal == null) {
-                                            stockReal = 0;
-                                        }
+                                        if (stockReal == null) stockReal = 0;
 
                                         txtNombre.setText(nombreReal);
-                                        txtDetalles.setText("Precio: $" + precioReal +"\n" +
-                                            "Stock: " + stockReal);
+                                        txtDetalles.setText("Precio: $" + precioReal + "\nStock: " + stockReal);
                                     }
                                 }
                                 @Override
-                                public void onCancelled(@NonNull com.google.firebase.database.DatabaseError error) {}
+                                public void onCancelled(@NonNull DatabaseError error) {}
                             });
 
+                    // 3. COLOCAMOS EL LETRERO FLOTANTE
                     ViewRenderable.builder().setView(this, infoView).build()
                             .thenAccept(viewRenderable -> {
 
-
-                                com.google.ar.sceneform.Node textNode = new com.google.ar.sceneform.Node() {
+                               Node textNode = new Node() {
                                     @Override
                                     public void onUpdate(FrameTime frameTime) {
                                         super.onUpdate(frameTime);
                                         if (getScene() == null || getScene().getCamera() == null) return;
 
-
                                         Vector3 modelPos = transformNode.getWorldPosition();
                                         Vector3 cameraPos = getScene().getCamera().getWorldPosition();
-                                        float escalaVisual = transformNode.getWorldScale().y;
-
+                                        float zoomActual = transformNode.getWorldScale().y;
 
                                         Vector3 direccionHaciaUsuario = Vector3.subtract(cameraPos, modelPos);
                                         direccionHaciaUsuario.y = 0;
                                         direccionHaciaUsuario = direccionHaciaUsuario.normalized();
 
 
-                                        float distanciaArriba = 0.8f * escalaVisual;
-                                        float distanciaAdelante = 0.3f * escalaVisual;
-
+                                        float distanciaArriba = (techoOriginal * zoomActual) + 0.15f;
+                                        float distanciaAdelante = 0.2f * zoomActual;
 
                                         Vector3 nuevaPosicion = new Vector3(
                                                 modelPos.x + (direccionHaciaUsuario.x * distanciaAdelante),
@@ -297,7 +318,6 @@ public class activity_ar_scanner extends AppCompatActivity {
                                                 modelPos.z + (direccionHaciaUsuario.z * distanciaAdelante)
                                         );
                                         setWorldPosition(nuevaPosicion);
-
 
                                         Vector3 direction = Vector3.subtract(cameraPos, getWorldPosition());
                                         direction.y = 0;
@@ -308,82 +328,58 @@ public class activity_ar_scanner extends AppCompatActivity {
                                     }
                                 };
 
+
                                 textNode.setParent(anchorNode);
                                 textNode.setRenderable(viewRenderable);
-
-
-                                transformNode.getScaleController().setEnabled(true);
-                                transformNode.getScaleController().setMinScale(0.01f);
-                                transformNode.getScaleController().setMaxScale(2.0f);
-
-                                transformNode.getTranslationController().setEnabled(true);
-
-                                a)
-                                transformNode.getRotationController().setEnabled(true);
-
-
-                                transformNode.setOnTapListener((hitTestResult, motionEvent) -> {
-
-                                    mostrarInformacionDelProducto(idProducto);
-                                });
-
-                                transformNode.select();
-                                modelosColocados.put(idProducto, transformNode);
                             });
 
-
-                    transformNode.getScaleController().setEnabled(true);
-                    transformNode.getScaleController().setMinScale(1f);
-                    transformNode.getScaleController().setMaxScale(2.0f);
-
+                    // 4. CONTROLES NATIVOS (ZOOM Y TRASLACIÓN)
                     transformNode.getTranslationController().setEnabled(true);
+
+
                     transformNode.getRotationController().setEnabled(false);
 
+                    // 5. ROTACIÓN 3D LIBRE (Girar en todas direcciones con 2 dedos)
                     transformNode.setOnTouchListener((hitTestResult, motionEvent) -> {
                         int cantidadDedos = motionEvent.getPointerCount();
 
                         switch (motionEvent.getActionMasked()) {
-                            case MotionEvent.ACTION_DOWN:
-                                inicioToqueX = motionEvent.getX();
-                                inicioToqueY = motionEvent.getY();
-                                return false;
                             case MotionEvent.ACTION_POINTER_DOWN:
                                 if (cantidadDedos == 2) {
-                                    ultimoToqueX = motionEvent.getX(0);
-                                    ultimoToqueY = motionEvent.getY(0);
+
+                                    ultimoToqueX = (motionEvent.getX(0) + motionEvent.getX(1)) / 2;
+                                    ultimoToqueY = (motionEvent.getY(0) + motionEvent.getY(1)) / 2;
                                 }
-                                return false;
+                                break;
+
                             case MotionEvent.ACTION_MOVE:
                                 if (cantidadDedos == 2) {
 
-                                    float deltaX = motionEvent.getX(0) - ultimoToqueX;
-                                    float deltaY = motionEvent.getY(0) - ultimoToqueY;
+                                    float medioX = (motionEvent.getX(0) + motionEvent.getX(1)) / 2;
+                                    float medioY = (motionEvent.getY(0) + motionEvent.getY(1)) / 2;
 
-                                    ultimoToqueX = motionEvent.getX(0);
-                                    ultimoToqueY = motionEvent.getY(0);
+                                    float deltaX = medioX - ultimoToqueX;
+                                    float deltaY = medioY - ultimoToqueY;
 
-                                    Quaternion rotacionY = Quaternion.axisAngle(new Vector3(0.0f, 1.0f, 0.0f), deltaX * 0.2f);
-                                    Quaternion rotacionX = Quaternion.axisAngle(new Vector3(1.0f, 0.0f, 0.0f), deltaY * 0.2f);
+                                    ultimoToqueX = medioX;
+                                    ultimoToqueY = medioY;
+
+
+                                    Quaternion rotacionY = Quaternion.axisAngle(new Vector3(0.0f, 1.0f, 0.0f), deltaX * 0.5f);
+                                    Quaternion rotacionX = Quaternion.axisAngle(new Vector3(1.0f, 0.0f, 0.0f), deltaY * 0.5f);
                                     Quaternion rotacionTotal = Quaternion.multiply(rotacionX, rotacionY);
 
                                     transformNode.setLocalRotation(Quaternion.multiply(transformNode.getLocalRotation(), rotacionTotal));
                                 }
-                                return false;
-
-                            case MotionEvent.ACTION_UP:
-
-                                float movX = Math.abs(motionEvent.getX() - inicioToqueX);
-                                float movY = Math.abs(motionEvent.getY() - inicioToqueY);
-
-                                if (movX < 15 && movY < 15) {
-                                    mostrarInformacionDelProducto(idProducto);
-                                    return true;
-                                }
-                                return false;
+                                break;
                         }
                         return false;
                     });
 
+                    // 6. EL CLIC PARA LA INFORMACIÓN
+                    transformNode.setOnTapListener((hitTestResult, motionEvent) -> {
+                        mostrarInformacionDelProducto(idProducto);
+                    });
 
                     transformNode.select();
                     modelosColocados.put(idProducto, transformNode);
@@ -404,7 +400,7 @@ public class activity_ar_scanner extends AppCompatActivity {
                         }
                     }
                     @Override
-                    public void onCancelled(@NonNull com.google.firebase.database.DatabaseError error) {}
+                    public void onCancelled(@NonNull DatabaseError error) {}
                 });
     }
 }
