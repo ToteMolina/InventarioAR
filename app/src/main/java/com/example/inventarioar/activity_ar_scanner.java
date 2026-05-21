@@ -2,6 +2,7 @@ package com.example.inventarioar;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -42,7 +43,11 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
 
+import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.util.HashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -152,7 +157,7 @@ public class activity_ar_scanner extends AppCompatActivity {
                     return;
                 }
                 ExecutorService executor = Executors.newFixedThreadPool(4);
-                java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(totalProductos);
+                CountDownLatch latch = new java.util.concurrent.CountDownLatch(totalProductos);
                 Handler handler = new Handler(Looper.getMainLooper());
                 AugmentedImageDatabase baseDeDatosVisual = new AugmentedImageDatabase(session);
 
@@ -183,11 +188,11 @@ public class activity_ar_scanner extends AppCompatActivity {
                                 }
                             }
                         } finally {
-                            latch.countDown();
+                            latch.countDown(); //va descontando de uno a uno cuando la imagen ya ha sido descargada
                         }
                     });
                 }
-                new Thread(() -> {
+                new Thread(() -> { //funciona hasta que el countdown ya ha llegado a cero
                     try {
                         latch.await();
                         handler.post(() -> {
@@ -213,12 +218,14 @@ public class activity_ar_scanner extends AppCompatActivity {
 
     private Bitmap descargarImagenDesdeURL(String urlString) {
         try {
-            java.net.HttpURLConnection connection = (java.net.HttpURLConnection) new java.net.URL(urlString).openConnection();
+            //Se conecta a internet buscando la dirección de la foto (URL)
+            HttpURLConnection connection = (HttpURLConnection) new URL(urlString).openConnection();
             connection.connect();
-            java.io.InputStream input = connection.getInputStream();
-            android.graphics.BitmapFactory.Options opciones = new android.graphics.BitmapFactory.Options();
-            opciones.inPreferredConfig = android.graphics.Bitmap.Config.ARGB_8888;
-            Bitmap bitmap = android.graphics.BitmapFactory.decodeStream(input, null, opciones);
+            //Abre una "tubería" por donde van a entrar los datos de la imagen
+            InputStream input = connection.getInputStream();
+            BitmapFactory.Options opciones = new BitmapFactory.Options();
+            opciones.inPreferredConfig = Bitmap.Config.ARGB_8888; //se asegura que la imagen se descargue en alta calidad
+            Bitmap bitmap = BitmapFactory.decodeStream(input, null, opciones);
             input.close();
             return bitmap;
         } catch (Exception e) {
@@ -268,6 +275,10 @@ public class activity_ar_scanner extends AppCompatActivity {
                     transformNode.setParent(anchorNode);
                     transformNode.setRenderable(modelRenderable);
 
+                    //mide el objeto 3D que descargué, calcula dónde está su 'techo'
+                    // para poner el letrero, y ajusta la escala automáticamente para que cualquier
+                    // producto mida 40 centímetros al aparecer en el piso,
+                    // poniéndole límites al zoom del usuario.
                     float alturaLocalDelTecho = 0.1f;
                     Box collisionBox = (Box) modelRenderable.getCollisionShape();
                     if (collisionBox != null) {
@@ -300,7 +311,7 @@ public class activity_ar_scanner extends AppCompatActivity {
                                         String nombreReal = data.child("nombre").getValue(String.class);
                                         String precioReal = String.valueOf(data.child("precio").getValue());
 
-                                        // ETIQUETA FLOATING AR MINIMALISTA (Solo dejamos esto)
+                                        // ETIQUETA FLOATING AR MINIMALISTA
                                         txtNombre.setText(nombreReal);
                                         txtDetalles.setText("Precio: $" + precioReal);
                                     }
@@ -309,6 +320,11 @@ public class activity_ar_scanner extends AppCompatActivity {
                                 public void onCancelled(@NonNull DatabaseError error) {}
                             });
 
+                    //crea el letrero de información y le aplica un método de actualización constante (onUpdate).
+                    // Utiliza álgebra de vectores (Vector3) para asegurarse de que el letrero flote siempre arriba
+                    // y adelante del producto, ajustándose automáticamente si el usuario hace zoom.
+                    // Además, usa Quaternion para que el texto gire dinámicamente y siempre esté mirando de frente
+                    // a la cámara del usuario.
                     ViewRenderable.builder().setView(this, infoView).build()
                             .thenAccept(viewRenderable -> {
                                 Node textNode = new Node() {
