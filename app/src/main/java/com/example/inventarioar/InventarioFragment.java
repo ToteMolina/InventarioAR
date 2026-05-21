@@ -71,7 +71,7 @@ public class InventarioFragment extends Fragment {
 
         MaterialButton btnEscanear = view.findViewById(R.id.btnEscanearUniversal);
 
-//      Le damos la orden de abrir la ventana de Realidad Aumentada
+        // Le damos la orden de abrir la ventana de Realidad Aumentada
         if (btnEscanear != null) {
             btnEscanear.setOnClickListener(v -> {
                 // El "Intent" es el mensajero de Android que abre nuevas ventanas

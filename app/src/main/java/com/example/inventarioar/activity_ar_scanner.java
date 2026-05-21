@@ -28,6 +28,7 @@ import com.google.ar.core.Session;
 import com.google.ar.core.TrackingState;
 import com.google.ar.sceneform.AnchorNode;
 import com.google.ar.sceneform.FrameTime;
+import com.google.ar.sceneform.Node;
 import com.google.ar.sceneform.math.Quaternion;
 import com.google.ar.sceneform.math.Vector3;
 import com.google.ar.sceneform.rendering.ModelRenderable;
@@ -127,11 +128,19 @@ public class activity_ar_scanner extends AppCompatActivity {
                             String modelo3DUrl = productoSnap.child("modelo3DUrl").getValue(String.class);
 
                             if (id != null && imagenUrl != null) {
+                                if (imagenUrl.contains("/upload/")) {
+                                    imagenUrl = imagenUrl.replace("/upload/", "/upload/w_600/");
+                                }
+
                                 Bitmap fotoBitmap = descargarImagenDesdeURL(imagenUrl);
                                 if (fotoBitmap != null) {
                                     synchronized (baseDeDatosVisual) {
-                                        baseDeDatosVisual.addImage(id, fotoBitmap, 0.15f);
-                                        diccionarioProductos.put(id, new String[]{modelo3DUrl, nombre});
+                                        try {
+                                            baseDeDatosVisual.addImage(id, fotoBitmap, 0.15f);
+                                            diccionarioProductos.put(id, new String[]{modelo3DUrl, nombre});
+                                        } catch (Exception e) {
+                                            Log.e("ARCore", "Imagen rechazada: " + e.getMessage());
+                                        }
                                     }
                                     fotoBitmap.recycle();
                                 }
@@ -168,10 +177,20 @@ public class activity_ar_scanner extends AppCompatActivity {
 
     private Bitmap descargarImagenDesdeURL(String urlString) {
         try {
-            HttpURLConnection connection = (HttpURLConnection) new URL(urlString).openConnection();
+            java.net.HttpURLConnection connection = (java.net.HttpURLConnection) new java.net.URL(urlString).openConnection();
             connection.connect();
-            return BitmapFactory.decodeStream(connection.getInputStream());
-        } catch (Exception e) { return null; }
+            java.io.InputStream input = connection.getInputStream();
+
+            android.graphics.BitmapFactory.Options opciones = new android.graphics.BitmapFactory.Options();
+
+            opciones.inPreferredConfig = android.graphics.Bitmap.Config.ARGB_8888;
+
+            Bitmap bitmap = android.graphics.BitmapFactory.decodeStream(input, null, opciones);
+            input.close();
+            return bitmap;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private void vigilarCamara(FrameTime frameTime) {
@@ -229,7 +248,7 @@ public class activity_ar_scanner extends AppCompatActivity {
                                 @Override
                                 public void onDataChange(@NonNull DataSnapshot snapshot) {
                                     for (DataSnapshot data : snapshot.getChildren()) {
-                                        // Obtenemos los datos reales
+
                                         String nombreReal = data.child("nombre").getValue(String.class);
                                         String precioReal = String.valueOf(data.child("precio").getValue());
                                         Integer stockReal = data.child("stock").getValue(Integer.class);
@@ -249,19 +268,72 @@ public class activity_ar_scanner extends AppCompatActivity {
 
                     ViewRenderable.builder().setView(this, infoView).build()
                             .thenAccept(viewRenderable -> {
-                                TransformableNode textNode = new TransformableNode(arFragment.getTransformationSystem());
-                                textNode.setParent(transformNode);
+
+
+                                com.google.ar.sceneform.Node textNode = new com.google.ar.sceneform.Node() {
+                                    @Override
+                                    public void onUpdate(FrameTime frameTime) {
+                                        super.onUpdate(frameTime);
+                                        if (getScene() == null || getScene().getCamera() == null) return;
+
+
+                                        Vector3 modelPos = transformNode.getWorldPosition();
+                                        Vector3 cameraPos = getScene().getCamera().getWorldPosition();
+                                        float escalaVisual = transformNode.getWorldScale().y;
+
+
+                                        Vector3 direccionHaciaUsuario = Vector3.subtract(cameraPos, modelPos);
+                                        direccionHaciaUsuario.y = 0;
+                                        direccionHaciaUsuario = direccionHaciaUsuario.normalized();
+
+
+                                        float distanciaArriba = 0.8f * escalaVisual;
+                                        float distanciaAdelante = 0.3f * escalaVisual;
+
+
+                                        Vector3 nuevaPosicion = new Vector3(
+                                                modelPos.x + (direccionHaciaUsuario.x * distanciaAdelante),
+                                                modelPos.y + distanciaArriba,
+                                                modelPos.z + (direccionHaciaUsuario.z * distanciaAdelante)
+                                        );
+                                        setWorldPosition(nuevaPosicion);
+
+
+                                        Vector3 direction = Vector3.subtract(cameraPos, getWorldPosition());
+                                        direction.y = 0;
+
+                                        Quaternion lookRotation = Quaternion.lookRotation(direction, Vector3.up());
+                                        lookRotation = Quaternion.multiply(lookRotation, Quaternion.axisAngle(new Vector3(0, 1, 0), 180f));
+                                        setWorldRotation(lookRotation);
+                                    }
+                                };
+
+                                textNode.setParent(anchorNode);
                                 textNode.setRenderable(viewRenderable);
-                                textNode.setLocalPosition(new Vector3(0.0f, 0.5f, 0.3f));
-                                textNode.getScaleController().setEnabled(false);
-                                textNode.getRotationController().setEnabled(false);
-                                textNode.getTranslationController().setEnabled(false);
-                                textNode.setLocalScale(new Vector3(1f, 1f, 1f));
+
+
+                                transformNode.getScaleController().setEnabled(true);
+                                transformNode.getScaleController().setMinScale(0.01f);
+                                transformNode.getScaleController().setMaxScale(2.0f);
+
+                                transformNode.getTranslationController().setEnabled(true);
+
+                                a)
+                                transformNode.getRotationController().setEnabled(true);
+
+
+                                transformNode.setOnTapListener((hitTestResult, motionEvent) -> {
+
+                                    mostrarInformacionDelProducto(idProducto);
+                                });
+
+                                transformNode.select();
+                                modelosColocados.put(idProducto, transformNode);
                             });
 
 
                     transformNode.getScaleController().setEnabled(true);
-                    transformNode.getScaleController().setMinScale(0.01f);
+                    transformNode.getScaleController().setMinScale(1f);
                     transformNode.getScaleController().setMaxScale(2.0f);
 
                     transformNode.getTranslationController().setEnabled(true);
