@@ -161,8 +161,8 @@ public class GestionFragment extends Fragment {
                                 }
 
                                 btnGuardar.setText("Actualizar producto");
-                                btnGuardar.setTag(productoId); // guardar el id para usarlo al actualizar
-                                actualizarTextoEstado(); // refrescamos el mensaje de los archivos
+                                btnGuardar.setTag(productoId);
+                                actualizarTextoEstado();
                             }
                         }
 
@@ -355,26 +355,57 @@ public class GestionFragment extends Fragment {
         double precio = Double.parseDouble(txtPrecio.getText().toString().trim());
         int stock = Integer.parseInt(txtStock.getText().toString().trim());
         String categoria = spCategoria.getText().toString();
-        HashMap<String, Integer> sucursalesEnCero = new HashMap<>();
-        sucursalesEnCero.put("sucursal_centro", 0);
-        sucursalesEnCero.put("sucursal_metrocentro", 0);
-        sucursalesEnCero.put("sucursal_fmo", 0);
+
 
         String idExistente = btnGuardar.getTag() != null ? (String) btnGuardar.getTag() : null;
-        String id = idExistente != null ? idExistente : databaseReference.push().getKey();
+
+        if (idExistente == null) {
+
+            String nuevoId = databaseReference.push().getKey();
+
+            HashMap<String, Integer> sucursalesEnCero = new HashMap<>();
+            sucursalesEnCero.put("sucursal_centro", 0);
+            sucursalesEnCero.put("sucursal_metrocentro", 0);
+            sucursalesEnCero.put("sucursal_fmo", 0);
+
+            Producto nuevoProducto = new Producto(nuevoId, nombre, categoria, descripcion, precio, stock);
+            nuevoProducto.setImagenUrl(urlFotoCloudinary);
+            nuevoProducto.setModelo3DUrl(urlModeloCloudinary);
+            nuevoProducto.setStockPorSucursal(sucursalesEnCero);
+
+            if (nuevoId != null) {
+                databaseReference.child(nuevoId).setValue(nuevoProducto)
+                        .addOnSuccessListener(aVoid -> {
+                            Toast.makeText(getContext(), "¡Producto registrado exitosamente!", Toast.LENGTH_LONG).show();
+                            limpiarFormulario();
+                            NavHostFragment.findNavController(GestionFragment.this).navigateUp();
+                        });
+            }
+        } else {
+
+            HashMap<String, Object> actualizaciones = new HashMap<>();
+            actualizaciones.put("nombre", nombre);
+            actualizaciones.put("descripcion", descripcion);
+            actualizaciones.put("precio", precio);
+            actualizaciones.put("stock", stock);
+            actualizaciones.put("categoria", categoria);
 
 
-
-        Producto nuevoProducto = new Producto(id, nombre, categoria, descripcion, precio, stock);
-        nuevoProducto.setImagenUrl(urlFotoCloudinary);
-        nuevoProducto.setModelo3DUrl(urlModeloCloudinary);
-        nuevoProducto.setStockPorSucursal(sucursalesEnCero);
-        if (id != null) {
-            databaseReference.child(id).setValue(nuevoProducto)
+            if (!urlFotoCloudinary.isEmpty()) {
+                actualizaciones.put("imagenUrl", urlFotoCloudinary);
+            }
+            if (!urlModeloCloudinary.isEmpty()) {
+                actualizaciones.put("modelo3DUrl", urlModeloCloudinary);
+            }
+            databaseReference.child(idExistente).updateChildren(actualizaciones)
                     .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(getContext(), idExistente != null ? "¡Producto actualizado!" : "¡Producto registrado!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getContext(), "¡Producto actualizado!", Toast.LENGTH_LONG).show();
                         limpiarFormulario();
                         NavHostFragment.findNavController(GestionFragment.this).navigateUp();
+                    })
+                    .addOnFailureListener(e -> {
+                        Toast.makeText(getContext(), "Error al actualizar: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                        restaurarBotonGuardar();
                     });
         }
     }
@@ -394,7 +425,7 @@ public class GestionFragment extends Fragment {
         ivVistaPrevia.setImageResource(R.drawable.ic_inventory);
         ivVistaPrevia.setPadding(60, 60, 60, 60);
         ivVistaPrevia.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.text_secondary)));
-        btnGuardar.setTag(null); // quita el modo edición
+        btnGuardar.setTag(null);
 
         actualizarTextoEstado();
         restaurarBotonGuardar();

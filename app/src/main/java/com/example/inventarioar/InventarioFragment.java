@@ -1,5 +1,6 @@
 package com.example.inventarioar;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -103,8 +104,17 @@ public class InventarioFragment extends Fragment {
         // Le damos la orden de abrir la ventana de Realidad Aumentada
         if (btnEscanear != null) {
             btnEscanear.setOnClickListener(v -> {
-                // El "Intent" es el mensajero de Android que abre nuevas ventanas
-                android.content.Intent intent = new android.content.Intent(getContext(), activity_ar_scanner.class);
+                Intent intent = new Intent(getContext(), activity_ar_scanner.class);
+
+               
+                android.content.SharedPreferences prefs = requireContext().getSharedPreferences("InventarioPrefs", android.content.Context.MODE_PRIVATE);
+
+                String sucursalKey = prefs.getString("sucursalKey", "sucursal_metrocentro");
+                String sucursalNombre = prefs.getString("sucursalNombre", "Metrocentro San Miguel");
+
+                intent.putExtra("sucursalKey", sucursalKey);
+                intent.putExtra("nombreSucursal", sucursalNombre);
+
                 startActivity(intent);
             });
         }
