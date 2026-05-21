@@ -131,7 +131,7 @@ public class activity_ar_scanner extends AppCompatActivity {
 
                             if (id != null && imagenUrl != null) {
                                 if (imagenUrl.contains("/upload/")) {
-                                    imagenUrl = imagenUrl.replace("/upload/", "/upload/w_600/");
+                                    imagenUrl = imagenUrl.replace("/upload/", "/upload/w_1000/");
                                 }
 
                                 Bitmap fotoBitmap = descargarImagenDesdeURL(imagenUrl);
@@ -200,6 +200,7 @@ public class activity_ar_scanner extends AppCompatActivity {
         if (frame == null) return;
 
         for (AugmentedImage imagen : frame.getUpdatedTrackables(AugmentedImage.class)) {
+            Log.d("AR_DEBUG", "Imagen: " + imagen.getName() + " Estado: " + imagen.getTrackingState());
             if (imagen.getTrackingState() == TrackingState.TRACKING && !modelosColocados.containsKey(imagen.getName())) {
 
                 String idProducto = imagen.getName();
@@ -240,7 +241,7 @@ public class activity_ar_scanner extends AppCompatActivity {
                     transformNode.setRenderable(modelRenderable);
 
                     // 1. NORMALIZACIÓN DE TAMAÑO Y CÁLCULO DEL "TECHO"
-                    float alturaLocalDelTecho = 0.1f; 
+                    float alturaLocalDelTecho = 0.1f;
 
                     Box collisionBox = (Box) modelRenderable.getCollisionShape();
                     if (collisionBox != null) {
