@@ -318,7 +318,6 @@ public class activity_ar_scanner extends AppCompatActivity {
 
                                 transformNode.getTranslationController().setEnabled(true);
 
-                                a)
                                 transformNode.getRotationController().setEnabled(true);
 
 
