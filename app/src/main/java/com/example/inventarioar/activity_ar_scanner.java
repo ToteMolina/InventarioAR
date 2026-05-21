@@ -14,10 +14,12 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.AugmentedImage;
 import com.google.ar.core.AugmentedImageDatabase;
@@ -46,18 +48,24 @@ import java.util.concurrent.Executors;
 
 public class activity_ar_scanner extends AppCompatActivity {
 
+    //Variables
     private ArFragment arFragment;
     private ProgressBar loadingProgressBar;
 
-    private HashMap<String, String[]> diccionarioProductos = new HashMap<>();
-    private HashMap<String, TransformableNode> modelosColocados = new HashMap<>();
+
+    private HashMap<String, String[]> diccionarioProductos = new HashMap<>(); //guarda el id del producto y el enlace del modelo 3d para descargardo y los asigna a una llave
+    private HashMap<String, TransformableNode> modelosColocados = new HashMap<>(); //sirve como un validador para no poner dos veces el mismo objeto en el suelo
     private float ultimoToqueX = 0;
     private float ultimoToqueY = 0;
+
+    //variables donde se guarda el modelo detectado antes de que el usuario toque el suelo
     private String modeloPendienteUrl = null;
     private String idProductoPendiente = null;
+    //indicador para ver si se ha detectado o no un producto y colocarlo en el suelo
     private boolean modoColocacion = false;
+    private View panelInstrucciones;
+    private TextView txtInstruccion;
 
-    // Variables de control para la sucursal del GPS
     private String sucursalDetectadaKey = "sucursal_metrocentro";
     private String sucursalDetectadaNombre = "Metrocentro San Miguel";
 
@@ -78,6 +86,8 @@ public class activity_ar_scanner extends AppCompatActivity {
         }
 
         loadingProgressBar = findViewById(R.id.loadingProgressBar);
+        panelInstrucciones = findViewById(R.id.panelInstrucciones);
+        txtInstruccion = findViewById(R.id.txtInstruccion);
 
         MaterialButton btnCerrar = findViewById(R.id.btnCerrarAR);
         if (btnCerrar != null) btnCerrar.setOnClickListener(v -> finish());
@@ -85,15 +95,21 @@ public class activity_ar_scanner extends AppCompatActivity {
         arFragment = (ArFragment) getSupportFragmentManager().findFragmentById(R.id.arFragment);
 
         if (arFragment != null) {
+            //inicializacion de la camara del arcore
+            //instruccion para descargar la base de datos y que tenga el contexto de lo que debe de buscar
             arFragment.setOnSessionConfigurationListener(this::configurarMotorDeImagenes);
+            //le decimos que vigile la camara todo el tiempo en busca de coinicidencias
             arFragment.getArSceneView().getScene().addOnUpdateListener(this::vigilarCamara);
 
+            //
             arFragment.setOnTapArPlaneListener((hitResult, plane, motionEvent) -> {
                 if (modoColocacion && modeloPendienteUrl != null) {
-                    Anchor anchorDetectado = hitResult.createAnchor();
+
+                    panelInstrucciones.setVisibility(View.GONE); //ocultamos el mensaje de la imagen detectada
+                    Anchor anchorDetectado = hitResult.createAnchor(); //crea un ancla en las coodernadas donde el uusario toco
                     descargarYColocarModeloEnPiso(anchorDetectado, modeloPendienteUrl, idProductoPendiente);
-                    modoColocacion = false;
-                    modeloPendienteUrl = null;
+                    modoColocacion = false; //coloca el semaforo en rojo para limpiar los toques
+                    modeloPendienteUrl = null; //asignamos en null el modelo detectado
                 }
             });
         }
@@ -114,6 +130,25 @@ public class activity_ar_scanner extends AppCompatActivity {
 
                 if (totalProductos == 0) {
                     loadingLayout.setVisibility(View.GONE);
+                    AlertDialog dialogCerrarCamara = new MaterialAlertDialogBuilder(activity_ar_scanner.this)
+                            .setTitle("Inventario Vacío")
+                            .setMessage("No hay productos registrados en la base de datos en este momento.")
+                            .setPositiveButton("Entendido", (dialog, which) -> {
+                                // Al darle "Entendido", cerramos la pantalla porque no hay nada que hacer aquí
+                                finish();
+                            })
+                            .setCancelable(false) // Esto evita que el usuario lo cierre tocando fuera del cuadro
+                            .create();
+                        dialogCerrarCamara.show();
+
+                    int modoPantalla = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+                    boolean esModoOscuro = (modoPantalla == android.content.res.Configuration.UI_MODE_NIGHT_YES);
+
+                    int colorTexto = esModoOscuro ? android.graphics.Color.WHITE : android.graphics.Color.BLACK;
+
+                    // 4. Pintamos el botón "Cancelar" con el color inteligente
+                    dialogCerrarCamara.getButton(AlertDialog.BUTTON_POSITIVE)
+                            .setTextColor(colorTexto);
                     return;
                 }
                 ExecutorService executor = Executors.newFixedThreadPool(4);
@@ -211,7 +246,8 @@ public class activity_ar_scanner extends AppCompatActivity {
 
                     modelosColocados.put(idProductoPendiente, null);
                     runOnUiThread(() -> {
-                        Toast.makeText(this, "¡" + nombreReal + " detectado! Toca los puntos blancos en el piso.", Toast.LENGTH_LONG).show();
+                        txtInstruccion.setText("¡" + nombreReal + " detectado!\nToca los puntos blancos en el piso para colocarlo.");
+                        panelInstrucciones.setVisibility(View.VISIBLE); // Se muestra gigante y claro
                     });
                 }
             }
@@ -426,11 +462,19 @@ public class activity_ar_scanner extends AppCompatActivity {
                                 mensajeDialog.append("Stock general disponible: ").append(stockReal).append(" unidades");
                             }
 
-                            new MaterialAlertDialogBuilder(activity_ar_scanner.this)
+                            AlertDialog dialogoInfo = new MaterialAlertDialogBuilder(activity_ar_scanner.this)
                                     .setTitle(nombre)
                                     .setMessage(mensajeDialog.toString())
                                     .setPositiveButton("Cerrar", null)
-                                    .show();
+                                    .create();
+                            dialogoInfo.show();
+                            int modoPantalla = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+                            boolean esModoOscuro = (modoPantalla == android.content.res.Configuration.UI_MODE_NIGHT_YES);
+
+                            int colorCerrar = esModoOscuro ? android.graphics.Color.WHITE : android.graphics.Color.BLACK;
+
+                            dialogoInfo.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+                                    .setTextColor(colorCerrar);
                         }
                     }
                     @Override
