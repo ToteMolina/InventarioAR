@@ -57,4 +57,9 @@ public class Producto {
 
     public HashMap<String, Integer> getStockPorSucursal() { return stockPorSucursal; }
     public void setStockPorSucursal(HashMap<String, Integer> stockPorSucursal) { this.stockPorSucursal = stockPorSucursal; }
+
+    @Override
+    public String toString() {
+        return nombre;
+    }
 }

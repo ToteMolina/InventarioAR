@@ -271,17 +271,19 @@ public class GestionFragment extends Fragment {
         double precio = Double.parseDouble(txtPrecio.getText().toString().trim());
         int stock = Integer.parseInt(txtStock.getText().toString().trim());
         String categoria = spCategoria.getText().toString();
+        HashMap<String, Integer> sucursalesEnCero = new HashMap<>();
+        sucursalesEnCero.put("sucursal_centro", 0);
+        sucursalesEnCero.put("sucursal_metrocentro", 0);
+        sucursalesEnCero.put("sucursal_fmo", 0);
 
         String id = databaseReference.push().getKey();
 
-        HashMap<String, Integer> stockGPS = new HashMap<>();
-        stockGPS.put("bodega_central", stock);
+
 
         Producto nuevoProducto = new Producto(id, nombre, categoria, descripcion, precio, stock);
         nuevoProducto.setImagenUrl(urlFotoCloudinary);
         nuevoProducto.setModelo3DUrl(urlModeloCloudinary);
-        nuevoProducto.setStockPorSucursal(stockGPS);
-
+        nuevoProducto.setStockPorSucursal(sucursalesEnCero);
         if (id != null) {
             databaseReference.child(id).setValue(nuevoProducto)
                     .addOnSuccessListener(aVoid -> {
