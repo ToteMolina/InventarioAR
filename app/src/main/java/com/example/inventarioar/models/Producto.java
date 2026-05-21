@@ -30,7 +30,6 @@ public class Producto {
         this.stockPorSucursal = new HashMap<>();
     }
 
-    // --- GETTERS Y SETTERS ---
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
