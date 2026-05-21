@@ -48,9 +48,6 @@ public class activity_ar_scanner extends AppCompatActivity {
 
     private ArFragment arFragment;
     private ProgressBar loadingProgressBar;
-    private View panelStock;
-    private TextView txtPanelTitulo;
-    private TextView txtPanelContenido;
 
     private HashMap<String, String[]> diccionarioProductos = new HashMap<>();
     private HashMap<String, TransformableNode> modelosColocados = new HashMap<>();
@@ -81,9 +78,6 @@ public class activity_ar_scanner extends AppCompatActivity {
         }
 
         loadingProgressBar = findViewById(R.id.loadingProgressBar);
-        panelStock = findViewById(R.id.panelStock);
-        txtPanelTitulo = findViewById(R.id.txtPanelTitulo);
-        txtPanelContenido = findViewById(R.id.txtPanelContenido);
 
         MaterialButton btnCerrar = findViewById(R.id.btnCerrarAR);
         if (btnCerrar != null) btnCerrar.setOnClickListener(v -> finish());
@@ -270,77 +264,9 @@ public class activity_ar_scanner extends AppCompatActivity {
                                         String nombreReal = data.child("nombre").getValue(String.class);
                                         String precioReal = String.valueOf(data.child("precio").getValue());
 
-                                        // 1. ETIQUETA FLOATING AR MINIMALISTA
+                                        // ETIQUETA FLOATING AR MINIMALISTA (Solo dejamos esto)
                                         txtNombre.setText(nombreReal);
                                         txtDetalles.setText("Precio: $" + precioReal);
-
-                                        // 2. CONFIGURACIÓN DEL PANEL SUPERIOR ESTÁTICO
-                                        txtPanelTitulo.setText(nombreReal + " - $" + precioReal);
-
-                                        StringBuilder datosPanel = new StringBuilder();
-                                        // Corregido: Buscamos el nodo real 'stockPorSucursal'
-                                        DataSnapshot stockPorSucursalSnap = data.child("stockPorSucursal");
-
-                                        if (stockPorSucursalSnap.exists()) {
-                                            long stockLocal = -1;
-                                            StringBuilder otrasSucursalesConStock = new StringBuilder();
-                                            boolean hayOtrasOpciones = false;
-
-                                            for (DataSnapshot sucursal : stockPorSucursalSnap.getChildren()) {
-                                                String keySucursal = sucursal.getKey();
-                                                long cantidad = 0;
-                                                if (sucursal.getValue() instanceof Long) {
-                                                    cantidad = (long) sucursal.getValue();
-                                                } else if (sucursal.getValue() instanceof Integer) {
-                                                    cantidad = (long)(int) sucursal.getValue();
-                                                }
-
-                                                // Mapeamos el identificador a un nombre legible en pantalla
-                                                String nombreSucursalLegible = keySucursal;
-                                                if (keySucursal.equals("sucursal_metrocentro")) nombreSucursalLegible = "Metrocentro San Miguel";
-                                                else if (keySucursal.equals("sucursal_centro")) nombreSucursalLegible = "Sucursal Centro";
-                                                else if (keySucursal.equals("sucursal_fmo")) nombreSucursalLegible = "FMO - UES";
-
-                                                // Comparamos usando la KEY exacta provista por el GPS
-                                                if (keySucursal.equalsIgnoreCase(sucursalDetectadaKey)) {
-                                                    stockLocal = cantidad;
-                                                } else {
-                                                    if (cantidad > 0) {
-                                                        otrasSucursalesConStock.append(nombreSucursalLegible).append(": ").append(cantidad).append(" unidades\n");
-                                                        hayOtrasOpciones = true;
-                                                    }
-                                                }
-                                            }
-
-                                            // Renderizado inteligente según las existencias locales
-                                            if (stockLocal > 0) {
-                                                datosPanel.append("Sucursal actual (").append(sucursalDetectadaNombre).append("): ").append(stockLocal).append(" unidades disponibles\n\n");
-                                                if (hayOtrasOpciones) {
-                                                    datosPanel.append("También disponible en:\n").append(otrasSucursalesConStock.toString());
-                                                }
-                                            } else if (stockLocal == 0) {
-                                                datosPanel.append("Sucursal actual (").append(sucursalDetectadaNombre).append("): Sin unidades disponibles\n\n");
-                                                if (hayOtrasOpciones) {
-                                                    datosPanel.append("Opciones disponibles en sucursales cercanas:\n").append(otrasSucursalesConStock.toString());
-                                                } else {
-                                                    datosPanel.append("Producto completamente agotado en las demás ubicaciones.");
-                                                }
-                                            } else {
-                                                if (hayOtrasOpciones) {
-                                                    datosPanel.append("Opciones disponibles:\n").append(otrasSucursalesConStock.toString());
-                                                } else {
-                                                    datosPanel.append("Sin inventario registrado para este producto.");
-                                                }
-                                            }
-                                        } else {
-                                            // Fallback por si la base de datos mantiene la estructura antigua
-                                            Integer stockReal = data.child("stock").getValue(Integer.class);
-                                            if (stockReal == null) stockReal = 0;
-                                            datosPanel.append("Stock general disponible: ").append(stockReal).append(" unidades");
-                                        }
-
-                                        txtPanelContenido.setText(datosPanel.toString());
-                                        panelStock.setVisibility(View.VISIBLE);
                                     }
                                 }
                                 @Override
@@ -429,11 +355,24 @@ public class activity_ar_scanner extends AppCompatActivity {
                         for (DataSnapshot data : snapshot.getChildren()) {
                             String nombre = data.child("nombre").getValue(String.class);
                             String precio = String.valueOf(data.child("precio").getValue());
+                            String descripcion = data.child("descripcion").getValue(String.class);
 
-                            StringBuilder stockPorSucursal = new StringBuilder();
+                            if (descripcion == null || descripcion.isEmpty()) {
+                                descripcion = "Sin descripción disponible.";
+                            }
+
+                            StringBuilder mensajeDialog = new StringBuilder();
+                            mensajeDialog.append("Precio: $").append(precio).append("\n");
+                            mensajeDialog.append("Descripción: ").append(descripcion).append("\n\n");
+                            mensajeDialog.append("--- DISPONIBILIDAD ---\n\n");
+
                             DataSnapshot stockPorSucursalSnap = data.child("stockPorSucursal");
 
                             if (stockPorSucursalSnap.exists()) {
+                                long stockLocal = -1;
+                                StringBuilder otrasSucursalesConStock = new StringBuilder();
+                                boolean hayOtrasOpciones = false;
+
                                 for (DataSnapshot sucursal : stockPorSucursalSnap.getChildren()) {
                                     String keySucursal = sucursal.getKey();
                                     long cantidad = 0;
@@ -448,18 +387,49 @@ public class activity_ar_scanner extends AppCompatActivity {
                                     else if (keySucursal.equals("sucursal_centro")) nombreSucursalLegible = "Sucursal Centro";
                                     else if (keySucursal.equals("sucursal_fmo")) nombreSucursalLegible = "FMO - UES";
 
-                                    stockPorSucursal.append(nombreSucursalLegible).append(": ").append(cantidad).append("\n");
+                                    if (keySucursal.equalsIgnoreCase(sucursalDetectadaKey)) {
+                                        stockLocal = cantidad;
+                                    } else {
+                                        if (cantidad > 0) {
+                                            otrasSucursalesConStock.append(nombreSucursalLegible).append(": ").append(cantidad).append(" unidades\n");
+                                            hayOtrasOpciones = true;
+                                        }
+                                    }
+                                }
+
+                                // Lógica inteligente de sucursales en el Alert
+                                if (stockLocal > 0) {
+                                    mensajeDialog.append("Sucursal actual (").append(sucursalDetectadaNombre).append("):\n");
+                                    mensajeDialog.append(stockLocal).append(" unidades disponibles\n\n");
+                                    if (hayOtrasOpciones) {
+                                        mensajeDialog.append("También disponible en:\n").append(otrasSucursalesConStock.toString());
+                                    }
+                                } else if (stockLocal == 0) {
+                                    mensajeDialog.append("Sucursal actual (").append(sucursalDetectadaNombre).append("):\n");
+                                    mensajeDialog.append("Sin unidades disponibles\n\n");
+                                    if (hayOtrasOpciones) {
+                                        mensajeDialog.append("Opciones en sucursales cercanas:\n").append(otrasSucursalesConStock.toString());
+                                    } else {
+                                        mensajeDialog.append("Producto completamente agotado en todas las sucursales.");
+                                    }
+                                } else {
+                                    if (hayOtrasOpciones) {
+                                        mensajeDialog.append("Opciones disponibles:\n").append(otrasSucursalesConStock.toString());
+                                    } else {
+                                        mensajeDialog.append("Sin inventario registrado para este producto.");
+                                    }
                                 }
                             } else {
                                 Integer stockReal = data.child("stock").getValue(Integer.class);
                                 if (stockReal == null) stockReal = 0;
-                                stockPorSucursal.append("Stock general: ").append(stockReal).append("\n");
+                                mensajeDialog.append("Stock general disponible: ").append(stockReal).append(" unidades");
                             }
 
                             new MaterialAlertDialogBuilder(activity_ar_scanner.this)
-                                    .setTitle("Detalle: " + nombre)
-                                    .setMessage("Precio: $" + precio + "\n\nStock disponible:\n" + stockPorSucursal.toString())
-                                    .setPositiveButton("Cerrar", null).show();
+                                    .setTitle(nombre)
+                                    .setMessage(mensajeDialog.toString())
+                                    .setPositiveButton("Cerrar", null)
+                                    .show();
                         }
                     }
                     @Override
