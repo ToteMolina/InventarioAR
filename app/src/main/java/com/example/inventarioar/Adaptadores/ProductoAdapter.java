@@ -19,7 +19,7 @@ import java.util.List;
 public class ProductoAdapter extends RecyclerView.Adapter<ProductoAdapter.ProductoVH> {
     private List<Producto> listaProductos;
     private OnProductoListener listener;
-    private String sucursalFiltroActual = "Todas";
+    private String sucursalFiltroActual = "Almacén";
     public interface OnProductoListener{
         void onEditar(Producto producto);
         void onEliminar(Producto producto);
@@ -48,7 +48,7 @@ public class ProductoAdapter extends RecyclerView.Adapter<ProductoAdapter.Produc
         holder.tvNombre.setText(producto.getNombre());
         holder.tvCategoria.setText(producto.getCategoria());
         holder.tvPrecio.setText(String.format("$%.2f", producto.getPrecio()));
-        if (sucursalFiltroActual.equals("Todas") || sucursalFiltroActual.isEmpty()){
+        if (sucursalFiltroActual.equals("Almacén") || sucursalFiltroActual.isEmpty()){
             holder.tvStock.setText("Stock Total: " + producto.getStock());
         } else {
             int stockEspecifico = 0;

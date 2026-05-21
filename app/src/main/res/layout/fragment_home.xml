@@ -11,7 +11,7 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- TÍTULO -->
+        <!--    título principal    -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -21,7 +21,7 @@
             android:textColor="?android:attr/textColorPrimary"
             android:layout_marginBottom="16dp" />
 
-        <!-- TARJETA SUCURSAL -->
+        <!--   tarjeta de la sucursal detectada     -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -98,7 +98,7 @@
             android:baselineAligned="false"
             android:layout_marginBottom="24dp">
 
-            <!-- TARJETA TOTAL -->
+            <!--      tarjeta del total productos      -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -132,7 +132,7 @@
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- TARJETA STOCK BAJO -->
+            <!--     tarjeta del stock bajo       -->
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
@@ -168,7 +168,7 @@
             </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
 
-        <!-- PRODUCTOS RECIENTES -->
+        <!--   productos recientes     -->
         <TextView
             android:id="@+id/tvTituloProductos"
             android:layout_width="wrap_content"

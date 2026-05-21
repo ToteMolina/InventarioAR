@@ -15,6 +15,7 @@
         android:padding="16dp"
         android:gravity="center_vertical">
 
+        <!--   contenedor de la imagen redondeada   -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="64dp"
             android:layout_height="64dp"
@@ -30,6 +31,7 @@
 
         </com.google.android.material.card.MaterialCardView>
 
+        <!--    contenedor de los textos    -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"

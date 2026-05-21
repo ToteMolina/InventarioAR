@@ -16,14 +16,14 @@
         android:layout_marginBottom="12dp"
         android:textColor="?android:attr/textColorPrimary"/>
 
-    <!-- PANEL DE FILTROS -->
+    <!--  panel de filtros  -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:layout_marginBottom="12dp">
 
-        <!-- Búsqueda por Nombre -->
+        <!--    filtrar por nombre    -->
         <com.google.android.material.textfield.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -48,7 +48,7 @@
                 />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Sucursal y Categoría -->
+        <!--   filtrar por sucursal y categoria     -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -107,7 +107,7 @@
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
-        <!-- Ordenar y Limpiar -->
+        <!--    filtrar por orden y limpiar filtros    -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"

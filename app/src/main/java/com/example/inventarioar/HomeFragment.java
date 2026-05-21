@@ -42,7 +42,7 @@ public class HomeFragment extends Fragment {
     private MaterialButton btnObtenerUbicacion;
     private RecyclerView rvProductosRecientes;
 
-    // El "motor" de Google para obtener coordenadas
+    // es la API de google services
     private FusedLocationProviderClient fusedLocationProviderClient;
     private String sucursalActualKey = "";
 
@@ -54,7 +54,7 @@ public class HomeFragment extends Fragment {
     private static final double LONGITUD_FMO = -88.1585955;
 
 
-    // Lanzador moderno para pedir permiso en pantalla
+    // lanzador encargado de recibir la respuesta del permiso
     private ActivityResultLauncher<String> requestPermissionLauncher;
 
     public HomeFragment() {
@@ -115,9 +115,11 @@ public class HomeFragment extends Fragment {
     }
 
     private void verificarPermisoYObtenerUbicacion(){
+        // se encarga de verificar el estado del permiso actual
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             obtenerUbicacion();
         } else {
+            // hace que aparezca la ventana emergente
             requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
         }
     }
@@ -127,6 +129,7 @@ public class HomeFragment extends Fragment {
         tvNombreSucursal.setText("Buscando...");
         tvDistancia.setText("");
 
+        // le pedimos las coordenadas a google
         fusedLocationProviderClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                 .addOnSuccessListener(requireActivity(), location -> {
                     if (location == null) {

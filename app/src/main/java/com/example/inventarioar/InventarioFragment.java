@@ -70,7 +70,10 @@ public class InventarioFragment extends Fragment {
     @Override
     public void onResume() {
         super.onResume();
-        String[] sucursales = {"Todas", "Metrocentro San Miguel", "Sucursal Centro", "FMO - UES"};
+
+        // se reinyectan adaptadores limpios a los menu desplegables
+
+        String[] sucursales = {"Almacén", "Metrocentro San Miguel", "Sucursal Centro", "FMO - UES"};
         spFiltroSucursal.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, sucursales));
 
         String[] categorias = {"Todas", "Mobiliario", "Electrónica", "Decoración", "Herramientas", "Otros"};
@@ -156,9 +159,9 @@ public class InventarioFragment extends Fragment {
 
     private void configurarFiltros(){
         // llenar el dropdown de sucursales
-        String[] sucursales = {"Todas", "Metrocentro San Miguel", "Sucursal Centro", "FMO - UES"};
+        String[] sucursales = {"Almacén", "Metrocentro San Miguel", "Sucursal Centro", "FMO - UES"};
         spFiltroSucursal.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, sucursales));
-        spFiltroSucursal.setText("Todas", false);
+        spFiltroSucursal.setText("Almacén", false);
 
         // llenar el dropdown de categorias
         String[] categorias = {"Todas", "Mobiliario", "Electrónica", "Decoración", "Herramientas", "Otros"};
@@ -193,7 +196,7 @@ public class InventarioFragment extends Fragment {
 
         btnLimpiarFiltros.setOnClickListener(v->{
             etBuscarProducto.setText("");
-            spFiltroSucursal.setText("Todas", false);
+            spFiltroSucursal.setText("Almacén", false);
             spFiltroCategoria.setText("Todas", false);
             spFiltroorden.setText("Más antiguos", false);
             aplicarFiltros();
@@ -213,7 +216,7 @@ public class InventarioFragment extends Fragment {
         else if (sucursalSeleccionada.equals("Sucursal Centro")) sucursalKey = "sucursal_centro";
         else if (sucursalSeleccionada.equals("FMO - UES")) sucursalKey = "sucursal_fmo";
 
-        adapter.setSucursalFiltroActual(sucursalKey.isEmpty() ? "Todas" : sucursalKey);
+        adapter.setSucursalFiltroActual(sucursalKey.isEmpty() ? "Almacén" : sucursalKey);
 
         for (Producto p : listaProductosMaestra){
             // filtro por nombre
@@ -225,7 +228,7 @@ public class InventarioFragment extends Fragment {
                 continue;
             }
             // filtro por sucursal
-            if (!sucursalSeleccionada.equals("Todas")){
+            if (!sucursalSeleccionada.equals("Almacén")){
                 if (p.getStockPorSucursal() == null || !p.getStockPorSucursal().containsKey(sucursalKey) || p.getStockPorSucursal().get(sucursalKey) <= 0){
                     continue;
                 }
