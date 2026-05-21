@@ -133,7 +133,7 @@ public class InventarioFragment extends Fragment {
 
             @Override
             public void onEliminar(Producto producto) {
-                new AlertDialog.Builder(requireContext())
+                AlertDialog dialogoEliminar = new androidx.appcompat.app.AlertDialog.Builder(requireContext())
                         .setTitle("Eliminar producto")
                         .setMessage("¿Está seguro que desea eliminar " + producto.getNombre() + "?")
                         .setPositiveButton("Eliminar", (dialog, which) -> {
@@ -142,7 +142,25 @@ public class InventarioFragment extends Fragment {
                                     .removeValue();
                         })
                         .setNegativeButton("Cancelar", null)
-                        .show();
+                        .create(); // 🚨 Cambiamos el .show() por .create() 🚨
+
+                // 2. Lo mostramos en pantalla
+                dialogoEliminar.show();
+
+                // 3. Detectamos el modo del teléfono (claro u oscuro)
+                int modoPantalla = requireContext().getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+                boolean esModoOscuro = (modoPantalla == android.content.res.Configuration.UI_MODE_NIGHT_YES);
+
+                // Si es oscuro usamos blanco, si es claro usamos negro
+                int colorTexto = esModoOscuro ? android.graphics.Color.WHITE : android.graphics.Color.BLACK;
+
+                // 4. Pintamos el botón "Cancelar" con el color inteligente
+                dialogoEliminar.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE)
+                        .setTextColor(colorTexto);
+
+                // 5. Pintamos el botón "Eliminar" de ROJO para advertir al usuario
+                dialogoEliminar.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+                        .setTextColor(android.graphics.Color.parseColor("#D32F2F"));
             }
         });
         rvInventario.setAdapter(adapter);
