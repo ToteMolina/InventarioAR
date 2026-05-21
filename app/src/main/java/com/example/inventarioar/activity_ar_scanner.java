@@ -14,6 +14,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
@@ -426,11 +427,19 @@ public class activity_ar_scanner extends AppCompatActivity {
                                 mensajeDialog.append("Stock general disponible: ").append(stockReal).append(" unidades");
                             }
 
-                            new MaterialAlertDialogBuilder(activity_ar_scanner.this)
+                            AlertDialog dialogoInfo = new MaterialAlertDialogBuilder(activity_ar_scanner.this)
                                     .setTitle(nombre)
                                     .setMessage(mensajeDialog.toString())
                                     .setPositiveButton("Cerrar", null)
-                                    .show();
+                                    .create();
+                            dialogoInfo.show();
+                            int modoPantalla = getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
+                            boolean esModoOscuro = (modoPantalla == android.content.res.Configuration.UI_MODE_NIGHT_YES);
+
+                            int colorCerrar = esModoOscuro ? android.graphics.Color.WHITE : android.graphics.Color.BLACK;
+
+                            dialogoInfo.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
+                                    .setTextColor(colorCerrar);
                         }
                     }
                     @Override
