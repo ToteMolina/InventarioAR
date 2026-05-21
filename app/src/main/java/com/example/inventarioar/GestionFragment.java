@@ -2,6 +2,7 @@ package com.example.inventarioar;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -9,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -22,6 +24,7 @@ import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.fragment.NavHostFragment;
 
+import com.bumptech.glide.Glide;
 import com.cloudinary.android.MediaManager;
 import com.cloudinary.android.callback.ErrorInfo;
 import com.cloudinary.android.callback.UploadCallback;
@@ -29,8 +32,11 @@ import com.example.inventarioar.models.Producto;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.textfield.TextInputEditText;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -44,12 +50,13 @@ public class GestionFragment extends Fragment {
     private MaterialButton btnGuardar, btnGaleria, btnCamara, btnSeleccionarModelo;
     private TextView tvEstadoArchivos;
     private FloatingActionButton btnRegresar;
+    private ImageView ivVistaPrevia;
     private DatabaseReference databaseReference;
-
     private Uri uriImagen = null;
     private Uri uriModelo = null;
+    private String urlImagenExistente = "";
+    private String urlModeloExistente = "";
     private String rutaCamara;
-
     private String urlFotoCloudinary = "";
     private String urlModeloCloudinary = "";
 
@@ -101,7 +108,7 @@ public class GestionFragment extends Fragment {
             config.put("api_secret", "-J5hIeUbQ4zB-DLwOnv1Wt0XeYE");
             MediaManager.init(requireContext(), config);
         } catch (IllegalStateException e) {
-
+            // Ya inicializado
         }
     }
 
@@ -125,6 +132,45 @@ public class GestionFragment extends Fragment {
         btnSeleccionarModelo = view.findViewById(R.id.btnSeleccionarModelo);
         tvEstadoArchivos = view.findViewById(R.id.tvEstadoArchivos);
         btnRegresar = view.findViewById(R.id.btnRegresar);
+        ivVistaPrevia = view.findViewById(R.id.ivVistaPrevia);
+
+        String productoId = getArguments() != null ? getArguments().getString("productoId") : null;
+
+        if (productoId != null){
+            FirebaseDatabase.getInstance().getReference("Productos")
+                    .child(productoId)
+                    .addListenerForSingleValueEvent(new ValueEventListener() {
+                        @Override
+                        public void onDataChange(@NonNull DataSnapshot snapshot) {
+                            Producto p = snapshot.getValue(Producto.class);
+                            if (p != null){
+                                txtNombre.setText(p.getNombre());
+                                txtDescripcion.setText(p.getDescripcion());
+                                txtPrecio.setText(String.valueOf(p.getPrecio()));
+                                txtStock.setText(String.valueOf(p.getStock()));
+                                spCategoria.setText(p.getCategoria(), false);
+
+                                // guardamos las URLs que ya existen en la base de datos
+                                urlImagenExistente = p.getImagenUrl() != null ? p.getImagenUrl() : "";
+                                urlModeloExistente = p.getModelo3DUrl() != null ? p.getModelo3DUrl() : "";
+
+                                if (!urlImagenExistente.isEmpty()){
+                                    ivVistaPrevia.setImageTintList(null);
+                                    ivVistaPrevia.setPadding(0, 0, 0, 0);
+                                    Glide.with(requireContext()).load(urlImagenExistente).into(ivVistaPrevia);
+                                }
+
+                                btnGuardar.setText("Actualizar producto");
+                                btnGuardar.setTag(productoId); // guardar el id para usarlo al actualizar
+                                actualizarTextoEstado(); // refrescamos el mensaje de los archivos
+                            }
+                        }
+
+                        @Override
+                        public void onCancelled(@NonNull DatabaseError error) {
+                        }
+                    });
+        }
 
         databaseReference = FirebaseDatabase.getInstance().getReference("Productos");
 
@@ -141,7 +187,7 @@ public class GestionFragment extends Fragment {
         btnGaleria.setOnClickListener(v -> abrirGaleria());
         btnCamara.setOnClickListener(v -> validarYAbriCamara());
         btnSeleccionarModelo.setOnClickListener(v -> selectorModelo.launch("*/*"));
-        btnGuardar.setOnClickListener(v -> validarYIniciarSubida());
+        btnGuardar.setOnClickListener(v -> validarIniciarSubida());
         btnRegresar.setOnClickListener(v-> NavHostFragment.findNavController(this).navigateUp());
     }
 
@@ -185,84 +231,122 @@ public class GestionFragment extends Fragment {
     }
 
     private void actualizarTextoEstado() {
-        if (uriImagen != null && uriModelo != null) {
-            tvEstadoArchivos.setText("¡Imagen y Modelo 3D listos!");
-            tvEstadoArchivos.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
-        } else if (uriImagen != null) {
+        boolean tieneImagen = (uriImagen != null) || (!urlImagenExistente.isEmpty());
+        boolean tieneModelo = (uriModelo != null) || (!urlModeloExistente.isEmpty());
+
+        if (tieneImagen && tieneModelo) {
+            if (uriImagen != null || uriModelo != null) {
+                tvEstadoArchivos.setText("¡Archivos listos para guardar!");
+                tvEstadoArchivos.setTextColor(getResources().getColor(android.R.color.holo_green_dark));
+            } else {
+                tvEstadoArchivos.setText("Archivos actuales cargados. Solo selecciona nuevos si deseas reemplazarlos.");
+                tvEstadoArchivos.setTextColor(getResources().getColor(android.R.color.holo_blue_dark));
+            }
+        } else if (tieneImagen) {
             tvEstadoArchivos.setText("Imagen lista. Falta el Modelo 3D.");
-        } else if (uriModelo != null) {
+            tvEstadoArchivos.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+        } else if (tieneModelo) {
             tvEstadoArchivos.setText("Modelo 3D listo. Falta la Imagen.");
+            tvEstadoArchivos.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+        } else {
+            tvEstadoArchivos.setText("Falta seleccionar imagen y modelo 3D");
+            tvEstadoArchivos.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
+        }
+
+        if (uriImagen != null){
+            ivVistaPrevia.setImageTintList(null);
+            ivVistaPrevia.setPadding(0, 0, 0, 0);
+            Glide.with(requireContext()).load(uriImagen).into(ivVistaPrevia);
         }
     }
 
-    private void validarYIniciarSubida() {
+    private void validarIniciarSubida() {
         String nombre = txtNombre.getText().toString().trim();
         String precioStr = txtPrecio.getText().toString().trim();
         String stockStr = txtStock.getText().toString().trim();
         String categoria = spCategoria.getText().toString();
 
-        if (nombre.isEmpty() || precioStr.isEmpty() || stockStr.isEmpty() || uriImagen == null || uriModelo == null) {
-            Toast.makeText(getContext(), "Completa el formulario y selecciona ambos archivos", Toast.LENGTH_SHORT).show();
+        boolean tieneImagen = (uriImagen != null) || (!urlImagenExistente.isEmpty());
+        boolean tieneModelo = (uriModelo != null) || (!urlModeloExistente.isEmpty());
+
+        if (nombre.isEmpty() || precioStr.isEmpty() || stockStr.isEmpty() || categoria.isEmpty() || !tieneImagen || !tieneModelo) {
+            Toast.makeText(getContext(), "Completa el formulario y asegúrate de tener ambos archivos", Toast.LENGTH_SHORT).show();
             return;
         }
 
         btnGuardar.setEnabled(false);
-        btnGuardar.setText("Subiendo archivos...");
+        btnGuardar.setText("Procesando datos...");
 
-        MediaManager.get().upload(uriImagen)
-                .option("unsigned", true)
-                .option("upload_preset", "v28m3mxs")
-                .callback(new UploadCallback() {
-                    @Override
-                    public void onStart(String requestId) {}
-                    @Override
-                    public void onProgress(String requestId, long bytes, long totalBytes) {}
-
-                    @Override
-                    public void onSuccess(String requestId, Map resultData) {
-                        urlFotoCloudinary = (String) resultData.get("secure_url");
-                        subirModelo3DCloudinary();
-                    }
-
-                    @Override
-                    public void onError(String requestId, ErrorInfo error) {
-                        Toast.makeText(getContext(), "Error Foto: " + error.getDescription(), Toast.LENGTH_SHORT).show();
-                        btnGuardar.setEnabled(true);
-                        btnGuardar.setText("Guardar Producto");
-                    }
-
-                    @Override
-                    public void onReschedule(String requestId, ErrorInfo error) {}
-                }).dispatch();
+        procesarSubidaImagen();
     }
 
-    private void subirModelo3DCloudinary() {
-        MediaManager.get().upload(uriModelo)
-                .option("unsigned", true)
-                .option("upload_preset", "v28m3mxs")
-                .option("resource_type", "raw")
-                .callback(new UploadCallback() {
-                    @Override
-                    public void onStart(String requestId) {}
-                    @Override
-                    public void onProgress(String requestId, long bytes, long totalBytes) {}
+    private void procesarSubidaImagen() {
+        // si el usuario seleccionó una nueva imagen, la subimos a Cloudinary
+        if (uriImagen != null) {
+            MediaManager.get().upload(uriImagen)
+                    .option("unsigned", true)
+                    .option("upload_preset", "v28m3mxs")
+                    .callback(new UploadCallback() {
+                        @Override public void onStart(String requestId) {}
+                        @Override public void onProgress(String requestId, long bytes, long totalBytes) {}
 
-                    @Override
-                    public void onSuccess(String requestId, Map resultData) {
-                        urlModeloCloudinary = (String) resultData.get("secure_url");
-                        guardarFinalEnFirebase();
-                    }
+                        @Override
+                        public void onSuccess(String requestId, Map resultData) {
+                            urlFotoCloudinary = (String) resultData.get("secure_url");
+                            procesarSubidaModelo();
+                        }
 
-                    @Override
-                    public void onError(String requestId, ErrorInfo error) {
-                        Toast.makeText(getContext(), "Error Modelo: " + error.getDescription(), Toast.LENGTH_SHORT).show();
-                        btnGuardar.setEnabled(true);
-                        btnGuardar.setText("Guardar Producto");
-                    }
+                        @Override
+                        public void onError(String requestId, ErrorInfo error) {
+                            Toast.makeText(getContext(), "Error Foto: " + error.getDescription(), Toast.LENGTH_SHORT).show();
+                            restaurarBotonGuardar();
+                        }
 
-                    @Override
-                    public void onReschedule(String requestId, ErrorInfo error) {}
-                }).dispatch();
+                        @Override public void onReschedule(String requestId, ErrorInfo error) {}
+                    }).dispatch();
+        } else {
+            // si no seleccionó nueva imagen, reutilizamos la que ya estaba (modo edición)
+            urlFotoCloudinary = urlImagenExistente;
+            procesarSubidaModelo();
+        }
+    }
+
+    private void procesarSubidaModelo() {
+        // si el usuario seleccionó un nuevo modelo 3D lo subimos
+        if (uriModelo != null) {
+            MediaManager.get().upload(uriModelo)
+                    .option("unsigned", true)
+                    .option("upload_preset", "v28m3mxs")
+                    .option("resource_type", "raw")
+                    .callback(new UploadCallback() {
+                        @Override public void onStart(String requestId) {}
+                        @Override public void onProgress(String requestId, long bytes, long totalBytes) {}
+
+                        @Override
+                        public void onSuccess(String requestId, Map resultData) {
+                            urlModeloCloudinary = (String) resultData.get("secure_url");
+                            guardarFinalEnFirebase();
+                        }
+
+                        @Override
+                        public void onError(String requestId, ErrorInfo error) {
+                            Toast.makeText(getContext(), "Error Modelo: " + error.getDescription(), Toast.LENGTH_SHORT).show();
+                            restaurarBotonGuardar();
+                        }
+
+                        @Override public void onReschedule(String requestId, ErrorInfo error) {}
+                    }).dispatch();
+        } else {
+            // si no seleccionó nuevo modelo, reutilizamos el que ya estaba (modo edición)
+            urlModeloCloudinary = urlModeloExistente;
+            guardarFinalEnFirebase();
+        }
+    }
+
+    private void restaurarBotonGuardar() {
+        btnGuardar.setEnabled(true);
+        boolean esEdicion = btnGuardar.getTag() != null;
+        btnGuardar.setText(esEdicion ? "Actualizar producto" : "Guardar Producto");
     }
 
     private void guardarFinalEnFirebase() {
@@ -276,7 +360,8 @@ public class GestionFragment extends Fragment {
         sucursalesEnCero.put("sucursal_metrocentro", 0);
         sucursalesEnCero.put("sucursal_fmo", 0);
 
-        String id = databaseReference.push().getKey();
+        String idExistente = btnGuardar.getTag() != null ? (String) btnGuardar.getTag() : null;
+        String id = idExistente != null ? idExistente : databaseReference.push().getKey();
 
 
 
@@ -287,8 +372,9 @@ public class GestionFragment extends Fragment {
         if (id != null) {
             databaseReference.child(id).setValue(nuevoProducto)
                     .addOnSuccessListener(aVoid -> {
-                        Toast.makeText(getContext(), "¡Producto y multimedia registrados!", Toast.LENGTH_LONG).show();
+                        Toast.makeText(getContext(), idExistente != null ? "¡Producto actualizado!" : "¡Producto registrado!", Toast.LENGTH_LONG).show();
                         limpiarFormulario();
+                        NavHostFragment.findNavController(GestionFragment.this).navigateUp();
                     });
         }
     }
@@ -300,11 +386,17 @@ public class GestionFragment extends Fragment {
         txtStock.setText("");
         spCategoria.setText("Mobiliario", false);
         txtNombre.requestFocus();
+
         uriImagen = null;
         uriModelo = null;
-        tvEstadoArchivos.setText("Falta seleccionar imagen y modelo 3D");
-        tvEstadoArchivos.setTextColor(getResources().getColor(android.R.color.holo_red_dark));
-        btnGuardar.setEnabled(true);
-        btnGuardar.setText("Guardar Producto");
+        urlImagenExistente = "";
+        urlModeloExistente = "";
+        ivVistaPrevia.setImageResource(R.drawable.ic_inventory);
+        ivVistaPrevia.setPadding(60, 60, 60, 60);
+        ivVistaPrevia.setImageTintList(ColorStateList.valueOf(getResources().getColor(R.color.text_secondary)));
+        btnGuardar.setTag(null); // quita el modo edición
+
+        actualizarTextoEstado();
+        restaurarBotonGuardar();
     }
 }

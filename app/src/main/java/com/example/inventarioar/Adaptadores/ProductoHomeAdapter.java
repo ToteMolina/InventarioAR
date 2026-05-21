@@ -3,11 +3,13 @@ package com.example.inventarioar.Adaptadores;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.inventarioar.R;
 import com.example.inventarioar.models.Producto;
 
@@ -40,6 +42,12 @@ public class ProductoHomeAdapter extends RecyclerView.Adapter<ProductoHomeAdapte
         holder.tvCategoria.setText(p.getCategoria());
         holder.tvPrecio.setText(String.format("$%.2f", p.getPrecio()));
         holder.tvStock.setText("Stock: " + stock);
+
+        Glide.with(holder.itemView.getContext())
+                .load(p.getImagenUrl())
+                .placeholder(R.drawable.ic_inventory)
+                .error(R.drawable.ic_inventory)
+                .into(holder.imgProducto);
     }
 
     @Override
@@ -49,12 +57,14 @@ public class ProductoHomeAdapter extends RecyclerView.Adapter<ProductoHomeAdapte
 
     public class ProductoHomeVH extends RecyclerView.ViewHolder {
         TextView tvNombre, tvCategoria, tvPrecio, tvStock;
+        ImageView imgProducto;
         public ProductoHomeVH(@NonNull View itemView) {
             super(itemView);
-            tvNombre = itemView.findViewById(R.id.tvNombreProducto);
-            tvCategoria = itemView.findViewById(R.id.tvCategoriaProducto);
-            tvPrecio = itemView.findViewById(R.id.tvPrecioProducto);
-            tvStock = itemView.findViewById(R.id.tvStockProducto);
+            tvNombre = itemView.findViewById(R.id.tvNombreHome);
+            tvCategoria = itemView.findViewById(R.id.tvCategoriaHome);
+            tvPrecio = itemView.findViewById(R.id.tvPrecioHome);
+            tvStock = itemView.findViewById(R.id.tvStockHome);
+            imgProducto = itemView.findViewById(R.id.imgProductoHome);
         }
     }
 }

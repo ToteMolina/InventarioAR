@@ -4,64 +4,85 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
-    app:cardCornerRadius="32dp"
-    app:cardBackgroundColor="@color/primary_variant"
-    app:strokeWidth="0dp">
+    android:layout_marginBottom="12dp"
+    app:cardCornerRadius="24dp"
+    app:cardElevation="0dp"
+    android:backgroundTint="@color/primary_variant">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="14dp"
+        android:padding="12dp"
         android:gravity="center_vertical">
 
+        <!-- Contenedor de la Imagen Redondeada -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            android:layout_gravity="center_vertical">
+
+            <ImageView
+                android:id="@+id/imgProductoHome"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:background="#E0E0E0"/>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Contenedor de los Textos -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
+            android:layout_marginStart="16dp"
             android:orientation="vertical">
 
             <TextView
-                android:id="@+id/tvNombreProducto"
+                android:id="@+id/tvNombreHome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="15sp"
+                android:text="Nombre del Producto"
+                android:textSize="16sp"
                 android:textStyle="bold"
-                android:textColor="?android:attr/textColorPrimary" />
+                android:textColor="?android:attr/textColorPrimary"/>
 
             <TextView
-                android:id="@+id/tvCategoriaProducto"
+                android:id="@+id/tvCategoriaHome"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:text="Categoría"
                 android:textSize="13sp"
-                android:textColor="?android:attr/textColorSecondary" />
+                android:textColor="?android:attr/textColorSecondary"
+                android:layout_marginBottom="4dp"/>
 
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:gravity="end">
-
-            <TextView
-                android:id="@+id/tvPrecioProducto"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:textColor="@color/secondary" />
+                android:orientation="horizontal">
 
-            <TextView
-                android:id="@+id/tvStockProducto"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:textColor="?android:attr/textColorSecondary" />
+                <TextView
+                    android:id="@+id/tvPrecioHome"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="$0.00"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/secondary_variant" />
 
+                <TextView
+                    android:id="@+id/tvStockHome"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Stock: 0"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="?android:attr/textColorSecondary"/>
+            </LinearLayout>
         </LinearLayout>
-
     </LinearLayout>
 
 </com.google.android.material.card.MaterialCardView>

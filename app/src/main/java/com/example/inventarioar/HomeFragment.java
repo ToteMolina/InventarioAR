@@ -37,7 +37,7 @@ import java.util.List;
 
 public class HomeFragment extends Fragment {
 
-    private TextView tvNombreSucursal, tvDistancia, tvTituloProductos;
+    private TextView tvNombreSucursal, tvDistancia, tvTituloProductos, tvTotalProductos, tvStockBajo;
     private MaterialButton btnObtenerUbicacion;
     private RecyclerView rvProductosRecientes;
 
@@ -92,6 +92,8 @@ public class HomeFragment extends Fragment {
         tvTituloProductos = view.findViewById(R.id.tvTituloProductos);
         btnObtenerUbicacion = view.findViewById(R.id.btnObtenerUbicacion);
         rvProductosRecientes = view.findViewById(R.id.rvProductosRecientes);
+        tvTotalProductos = view.findViewById(R.id.tvTotalProductos);
+        tvStockBajo = view.findViewById(R.id.tvStockBajo);
 
         rvProductosRecientes.setLayoutManager(new LinearLayoutManager(getContext()));
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireActivity());
@@ -106,6 +108,8 @@ public class HomeFragment extends Fragment {
             tvNombreSucursal.setText(nombreGuardado);
             tvDistancia.setText("Última ubicación detectada");
             cargarDatosDeSucursal(keyGuardada, nombreGuardado);
+        } else {
+            verificarPermisoYObtenerUbicacion();
         }
     }
 
@@ -184,12 +188,14 @@ public class HomeFragment extends Fragment {
                     public void onDataChange(@NonNull DataSnapshot snapshot) {
                         List<Producto> todos = new ArrayList<>();
 
+                        int contadorTotal = 0;
+                        int contadorStockBajo = 0;
+
                         for (DataSnapshot ds : snapshot.getChildren()){
                             Producto p = ds.getValue(Producto.class);
 
                             if (p == null) continue;
 
-                            // obtener el stock de esta sucursal
                             int stockSucursal = 0;
                             if (p.getStockPorSucursal() != null && p.getStockPorSucursal().containsKey(sucursalKey)){
                                 stockSucursal = p.getStockPorSucursal().get(sucursalKey);
@@ -197,9 +203,15 @@ public class HomeFragment extends Fragment {
 
                             if (stockSucursal > 0){
                                 todos.add(p);
+                                contadorTotal++;
+                                if (stockSucursal <= 5){
+                                    contadorStockBajo++;
+                                }
                             }
                         }
 
+                        tvTotalProductos.setText(String.valueOf(contadorTotal));
+                        tvStockBajo.setText(String.valueOf(contadorStockBajo));
                         tvTituloProductos.setText("Productos recientes en: " + nombreSucursal);
 
                         // mostrar sólo los últimos 3

@@ -165,27 +165,59 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
+                android:gravity="center_vertical"
                 android:layout_marginBottom="16dp">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnGaleria"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                <LinearLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:layout_marginEnd="4dp"
-                    android:text="Galería"
-                    app:icon="@android:drawable/ic_menu_gallery" />
+                    android:layout_marginEnd="16dp"
+                    android:orientation="vertical">
 
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnCamara"
-                    style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:layout_marginStart="4dp"
-                    android:text="Cámara"
-                    app:icon="@android:drawable/ic_menu_camera" />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnGaleria"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginBottom="8dp"
+                        app:cornerRadius="24dp"
+                        android:text="Galería"
+                        android:backgroundTint="@color/primary_variant"
+                        android:textColor="@color/text_secondary"
+                        app:icon="@android:drawable/ic_menu_gallery"
+                        app:iconTint="@color/text_secondary" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnCamara"
+                        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        app:cornerRadius="24dp"
+                        android:text="Cámara"
+                        android:backgroundTint="@color/primary_variant"
+                        android:textColor="@color/text_secondary"
+                        app:icon="@android:drawable/ic_menu_camera"
+                        app:iconTint="@color/text_secondary" />
+                </LinearLayout>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/cardVistaPrevia"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="0dp"
+                    android:backgroundTint="@color/primary_variant"
+                    >
+
+                    <ImageView
+                        android:id="@+id/ivVistaPrevia"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:scaleType="centerCrop"
+                        android:padding="24dp"/>
+                </com.google.android.material.card.MaterialCardView>
+
             </LinearLayout>
 
             <TextView
@@ -201,7 +233,11 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="16dp"
-                android:text="Seleccionar Archivo .GLB" />
+                app:cornerRadius="24dp"
+                android:text="Seleccionar Archivo .GLB"
+                android:backgroundTint="@color/primary_variant"
+                android:textColor="@color/text_secondary"
+                />
 
             <TextView
                 android:id="@+id/tvEstadoArchivos"
