@@ -19,6 +19,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
+import com.google.android.material.snackbar.Snackbar;
 import com.google.ar.core.Anchor;
 import com.google.ar.core.AugmentedImage;
 import com.google.ar.core.AugmentedImageDatabase;
@@ -57,8 +58,10 @@ public class activity_ar_scanner extends AppCompatActivity {
     private String modeloPendienteUrl = null;
     private String idProductoPendiente = null;
     private boolean modoColocacion = false;
+    private Snackbar snackbarInstruccion;
+    private View panelInstrucciones;
+    private TextView txtInstruccion;
 
-    // Variables de control para la sucursal del GPS
     private String sucursalDetectadaKey = "sucursal_metrocentro";
     private String sucursalDetectadaNombre = "Metrocentro San Miguel";
 
@@ -79,6 +82,8 @@ public class activity_ar_scanner extends AppCompatActivity {
         }
 
         loadingProgressBar = findViewById(R.id.loadingProgressBar);
+        panelInstrucciones = findViewById(R.id.panelInstrucciones);
+        txtInstruccion = findViewById(R.id.txtInstruccion);
 
         MaterialButton btnCerrar = findViewById(R.id.btnCerrarAR);
         if (btnCerrar != null) btnCerrar.setOnClickListener(v -> finish());
@@ -91,6 +96,8 @@ public class activity_ar_scanner extends AppCompatActivity {
 
             arFragment.setOnTapArPlaneListener((hitResult, plane, motionEvent) -> {
                 if (modoColocacion && modeloPendienteUrl != null) {
+
+                    panelInstrucciones.setVisibility(View.GONE);
                     Anchor anchorDetectado = hitResult.createAnchor();
                     descargarYColocarModeloEnPiso(anchorDetectado, modeloPendienteUrl, idProductoPendiente);
                     modoColocacion = false;
@@ -212,7 +219,8 @@ public class activity_ar_scanner extends AppCompatActivity {
 
                     modelosColocados.put(idProductoPendiente, null);
                     runOnUiThread(() -> {
-                        Toast.makeText(this, "¡" + nombreReal + " detectado! Toca los puntos blancos en el piso.", Toast.LENGTH_LONG).show();
+                        txtInstruccion.setText("¡" + nombreReal + " detectado!\nToca los puntos blancos en el piso para colocarlo.");
+                        panelInstrucciones.setVisibility(View.VISIBLE); // Se muestra gigante y claro
                     });
                 }
             }
