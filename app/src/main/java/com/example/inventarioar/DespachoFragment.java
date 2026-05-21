@@ -63,7 +63,6 @@ public class DespachoFragment extends Fragment {
 
         databaseReference = FirebaseDatabase.getInstance().getReference("Productos");
 
-
         cargarProductos();
         cargarSucursales();
 
@@ -148,9 +147,11 @@ public class DespachoFragment extends Fragment {
 
         HashMap<String, Object> actualizaciones = new HashMap<>();
 
+
         actualizaciones.put("stock", ServerValue.increment(-cantidadEnviar));
 
-        actualizaciones.put("stock_sucursales/" + idSucursal, ServerValue.increment(cantidadEnviar));
+
+        actualizaciones.put("stockPorSucursal/" + idSucursal, ServerValue.increment(cantidadEnviar));
 
         databaseReference.child(productoSelected.id).updateChildren(actualizaciones)
                 .addOnSuccessListener(aVoid -> {
@@ -168,7 +169,6 @@ public class DespachoFragment extends Fragment {
 
     public static class ProductoItem {
 
-
         public String id;
         public String nombre;
         public int stock;
@@ -185,7 +185,6 @@ public class DespachoFragment extends Fragment {
 
         @Override
         public String toString() {
-
             return nombre + " (Stock: " + stock + ")";
         }
     }

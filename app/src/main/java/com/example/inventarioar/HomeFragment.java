@@ -2,6 +2,7 @@ package com.example.inventarioar;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
 import android.os.Bundle;
@@ -177,6 +178,11 @@ public class HomeFragment extends Fragment {
                         tvDistancia.setText(String.format("%.1f km de distancia", distancia / 1000f));
                     }
 
+                   SharedPreferences prefs = requireContext().getSharedPreferences("InventarioPrefs", android.content.Context.MODE_PRIVATE);
+                    prefs.edit()
+                            .putString("sucursalKey", sucursalActualKey)
+                            .putString("sucursalNombre", nombreSucursal)
+                            .apply();
                     cargarDatosDeSucursal(sucursalActualKey, nombreSucursal);
                 });
     }
