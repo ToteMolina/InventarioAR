@@ -306,6 +306,7 @@ public class activity_ar_scanner extends AppCompatActivity {
                                 };
                                 textNode.setParent(anchorNode);
                                 textNode.setRenderable(viewRenderable);
+                                textNode.setLocalScale(new Vector3(0.5f, 0.5f, 0.5f));
                             });
 
                     transformNode.getTranslationController().setEnabled(true);
@@ -364,7 +365,7 @@ public class activity_ar_scanner extends AppCompatActivity {
                             StringBuilder mensajeDialog = new StringBuilder();
                             mensajeDialog.append("Precio: $").append(precio).append("\n");
                             mensajeDialog.append("Descripción: ").append(descripcion).append("\n\n");
-                            mensajeDialog.append("--- DISPONIBILIDAD ---\n\n");
+                            mensajeDialog.append("DISPONIBILIDAD DEL PRODUCTO:\n\n");
 
                             DataSnapshot stockPorSucursalSnap = data.child("stockPorSucursal");
 
