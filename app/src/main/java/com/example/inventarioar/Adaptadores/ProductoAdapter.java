@@ -19,6 +19,7 @@ import java.util.List;
 public class ProductoAdapter extends RecyclerView.Adapter<ProductoAdapter.ProductoVH> {
     private List<Producto> listaProductos;
     private OnProductoListener listener;
+    private String sucursalFiltroActual = "Todas";
     public interface OnProductoListener{
         void onEditar(Producto producto);
         void onEliminar(Producto producto);
@@ -27,6 +28,10 @@ public class ProductoAdapter extends RecyclerView.Adapter<ProductoAdapter.Produc
     public ProductoAdapter(List<Producto> listaProductos, OnProductoListener listener) {
         this.listaProductos = listaProductos;
         this.listener = listener;
+    }
+
+    public void setSucursalFiltroActual(String sucursalKey){
+        this.sucursalFiltroActual = sucursalKey;
     }
 
     @NonNull
@@ -43,7 +48,15 @@ public class ProductoAdapter extends RecyclerView.Adapter<ProductoAdapter.Produc
         holder.tvNombre.setText(producto.getNombre());
         holder.tvCategoria.setText(producto.getCategoria());
         holder.tvPrecio.setText(String.format("$%.2f", producto.getPrecio()));
-        holder.tvStock.setText("Stock: " + producto.getStock());
+        if (sucursalFiltroActual.equals("Todas") || sucursalFiltroActual.isEmpty()){
+            holder.tvStock.setText("Stock Total: " + producto.getStock());
+        } else {
+            int stockEspecifico = 0;
+            if (producto.getStockPorSucursal() != null && producto.getStockPorSucursal().containsKey(sucursalFiltroActual)){
+                stockEspecifico = producto.getStockPorSucursal().get(sucursalFiltroActual);
+            }
+            holder.tvStock.setText("Stock: " + stockEspecifico);
+        }
 
         Glide.with(holder.itemView.getContext())
                         .load(producto.getImagenUrl())
