@@ -268,11 +268,11 @@
         android:id="@+id/btnRegresar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="32dp"
+        android:layout_gravity="top|end"
+        android:layout_margin="16dp"
         android:contentDescription="Regresar"
         app:backgroundTint="@color/secondary"
-        app:srcCompat="@android:drawable/ic_menu_revert"
+        app:srcCompat="@android:drawable/ic_menu_close_clear_cancel"
         app:tint="@color/white" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
