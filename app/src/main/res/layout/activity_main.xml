@@ -32,13 +32,13 @@
         android:background="@drawable/bg_menu_flotante"
         app:elevation="0dp"
         app:itemIconTint="@color/text_secondary"
-        app:itemIconSize="28dp"
+        app:itemIconSize="32dp"
         app:menu="@menu/bottom_nav_menu"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:itemActiveIndicatorStyle="@style/FondoPildoraMenu"
-        app:labelVisibilityMode="labeled"
+        app:labelVisibilityMode="selected"
         />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
