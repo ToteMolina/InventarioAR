@@ -27,12 +27,6 @@ android {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
-    packaging {
-        jniLibs {
-            // esto obliga al compilador a alinear las librerías nativas a los límites de 16 KB
-            useLegacyPackaging = false
-        }
-    }
 }
 
 dependencies {
