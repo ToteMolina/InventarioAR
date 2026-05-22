@@ -3,17 +3,17 @@
 
     <item
         android:id="@+id/homeFragment"
-        android:icon="@drawable/ic_home"
+        android:icon="@drawable/casa"
         android:title="Inicio" />
 
     <item
         android:id="@+id/inventarioFragment"
-        android:icon="@drawable/ic_inventory"
+        android:icon="@drawable/inventario"
         android:title="Inventario" />
 
     <item
         android:id="@+id/despachoFragment"
-        android:icon="@drawable/ic_despacho"
+        android:icon="@drawable/entrega_rapida"
         android:title="Despacho" />
 
 </menu>
