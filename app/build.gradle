@@ -27,6 +27,12 @@ android {
         sourceCompatibility JavaVersion.VERSION_11
         targetCompatibility JavaVersion.VERSION_11
     }
+    packaging {
+        jniLibs {
+            // esto obliga al compilador a alinear las librerías nativas a los límites de 16 KB
+            useLegacyPackaging = false
+        }
+    }
 }
 
 dependencies {
@@ -35,16 +41,33 @@ dependencies {
     implementation libs.activity
     implementation libs.constraintlayout
 
-    implementation 'com.google.android.material:material:1.12.0'
-    implementation platform('com.google.firebase:firebase-bom:34.13.0')
+    // nos ayudan a controlar el flujo de la app y el intercambio de los fragment
     implementation 'androidx.navigation:navigation-fragment:2.7.7'
     implementation 'androidx.navigation:navigation-ui:2.7.7'
+
+    // asegura que todas las librerías de Firebase usen versiones compatibles
+    implementation platform('com.google.firebase:firebase-bom:34.13.0')
+
+    // Firebase Realtime Database: Base de datos NoSQL en tiempo real para el inventario
     implementation libs.firebase.database
-    implementation 'com.google.firebase:firebase-storage:20.3.0'
+
+//    // Firebase Storage: Almacenamiento en la nube de Google para archivos y recursos
+//    implementation 'com.google.firebase:firebase-storage:20.3.0'
+
+    // API para rastrear las coordenadas
     implementation "com.google.android.gms:play-services-location:21.2.0"
-    implementation 'com.cloudinary:cloudinary-android:2.5.0'
+
+    // motor gráfico para renderizar objetos 3D y manejar Realidad Aumentada
     implementation 'com.gorisse.thomas.sceneform:ux:1.23.0'
+
+    // Cloudinary SDK: Servicio en la nube para gestión y optimización de imágenes
+    implementation 'com.cloudinary:cloudinary-android:2.5.0'
+
+    // librería para la carga rápida y almacenamiento en caché de imágenes de internet
     implementation 'com.github.bumptech.glide:glide:4.16.0'
+
+    // componentes de Diseño Material de Google
+    implementation 'com.google.android.material:material:1.12.0'
 
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit

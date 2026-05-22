@@ -1,189 +1,202 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/primary">
 
-    <LinearLayout
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:layout_height="match_parent">
 
-        <!--    título principal    -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Panel Principal"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:textColor="?android:attr/textColorPrimary"
-            android:layout_marginBottom="16dp" />
-
-        <!--   tarjeta de la sucursal detectada     -->
-        <com.google.android.material.card.MaterialCardView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:cardCornerRadius="32dp"
-            app:cardBackgroundColor="@color/primary_variant"
-            app:strokeWidth="0dp"
-            android:layout_marginBottom="16dp">
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Panel Principal"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="?android:attr/textColorPrimary"
+                android:layout_marginBottom="16dp" />
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="32dp"
+                app:cardBackgroundColor="@color/primary_variant"
+                app:strokeWidth="0dp"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="16dp"
+                    android:gravity="center_vertical">
+
+                    <ImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:src="@android:drawable/ic_menu_mylocation"
+                        app:tint="@color/secondary"
+                        android:layout_marginEnd="12dp" />
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvNombreSucursal"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Ubicación desconocida"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:textColor="?android:attr/textColorPrimary" />
+
+                        <TextView
+                            android:id="@+id/tvDistancia"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Presiona para detectar"
+                            android:textSize="13sp"
+                            android:textColor="?android:attr/textColorSecondary" />
+
+                    </LinearLayout>
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btnObtenerUbicacion"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:backgroundTint="@color/secondary"
+                        android:text="Detectar"
+                        android:textColor="@color/white"
+                        app:cornerRadius="32dp" />
+
+                </LinearLayout>
+
+            </com.google.android.material.card.MaterialCardView>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Resumen de Inventario"
+                android:textStyle="bold"
+                android:textSize="16sp"
+                android:layout_marginBottom="12dp"/>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:padding="16dp"
-                android:gravity="center_vertical">
+                android:baselineAligned="false"
+                android:layout_marginBottom="24dp">
 
-                <ImageView
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:src="@android:drawable/ic_menu_mylocation"
-                    app:tint="@color/secondary"
-                    android:layout_marginEnd="12dp" />
-
-                <LinearLayout
+                <com.google.android.material.card.MaterialCardView
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="vertical">
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="@color/primary_variant"
+                    app:cardCornerRadius="32dp"
+                    app:cardElevation="2dp">
 
-                    <TextView
-                        android:id="@+id/tvNombreSucursal"
-                        android:layout_width="wrap_content"
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:text="Ubicación desconocida"
-                        android:textSize="16sp"
-                        android:textStyle="bold"
-                        android:textColor="?android:attr/textColorPrimary" />
+                        android:orientation="vertical"
+                        android:padding="16dp"
+                        android:gravity="center">
 
-                    <TextView
-                        android:id="@+id/tvDistancia"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Presiona para detectar"
-                        android:textSize="13sp"
-                        android:textColor="?android:attr/textColorSecondary" />
+                        <TextView
+                            android:id="@+id/tvTotalProductos"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="28sp"
+                            android:textStyle="bold"
+                            android:textColor="@color/secondary"/>
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Total Productos"
+                            android:textSize="12sp"
+                            android:textColor="?android:attr/textColorSecondary"/>
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
 
-                </LinearLayout>
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btnObtenerUbicacion"
-                    android:layout_width="wrap_content"
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:backgroundTint="@color/secondary"
-                    android:text="Detectar"
-                    android:textColor="@color/white"
-                    app:cornerRadius="32dp"
-                    />
+                    android:layout_weight="1"
+                    android:layout_marginStart="8dp"
+                    android:backgroundTint="@color/primary_variant"
+                    app:cardCornerRadius="32dp"
+                    app:cardElevation="2dp">
 
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="16dp"
+                        android:gravity="center">
+
+                        <TextView
+                            android:id="@+id/tvStockBajo"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="28sp"
+                            android:textStyle="bold"
+                            android:textColor="#D32F2F"/>
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Stock Bajo (≤5)"
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:textSize="12sp" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
             </LinearLayout>
 
-        </com.google.android.material.card.MaterialCardView>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Resumen de Inventario"
-            android:textStyle="bold"
-            android:textSize="16sp"
-            android:layout_marginBottom="12dp"/>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:baselineAligned="false"
-            android:layout_marginBottom="24dp">
-
-            <!--      tarjeta del total productos      -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
+            <TextView
+                android:id="@+id/tvTituloProductos"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:backgroundTint="@color/primary_variant"
-                app:cardCornerRadius="32dp"
-                app:cardElevation="2dp">
+                android:text="Productos recientes"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:textColor="?android:attr/textColorPrimary"
+                android:layout_marginBottom="8dp" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp"
-                    android:gravity="center">
-
-                    <TextView
-                        android:id="@+id/tvTotalProductos"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0"
-                        android:textSize="28sp"
-                        android:textStyle="bold"
-                        android:textColor="@color/secondary"/>
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Total Productos"
-                        android:textSize="12sp"
-                        android:textColor="?android:attr/textColorSecondary"/>
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!--     tarjeta del stock bajo       -->
-            <com.google.android.material.card.MaterialCardView
-                android:layout_width="0dp"
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvProductosRecientes"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:backgroundTint="@color/primary_variant"
-                app:cardCornerRadius="32dp"
-                app:cardElevation="2dp">
+                android:nestedScrollingEnabled="false" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="vertical"
-                    android:padding="16dp"
-                    android:gravity="center">
-
-                    <TextView
-                        android:id="@+id/tvStockBajo"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0"
-                        android:textSize="28sp"
-                        android:textStyle="bold"
-                        android:textColor="#D32F2F"/>
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Stock Bajo (≤5)"
-                        android:textColor="?android:attr/textColorSecondary"
-                        android:textSize="12sp" />
-                </LinearLayout>
-            </com.google.android.material.card.MaterialCardView>
         </LinearLayout>
+    </ScrollView>
 
-        <!--   productos recientes     -->
-        <TextView
-            android:id="@+id/tvTituloProductos"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Productos recientes"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="?android:attr/textColorPrimary"
-            android:layout_marginBottom="8dp" />
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnEscanearUniversal"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Escanear"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:backgroundTint="@color/secondary"
+        app:cornerRadius="16dp"
+        app:icon="@android:drawable/ic_menu_camera"
+        app:iconTint="@color/white"
+        android:textColor="@color/white" />
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvProductosRecientes"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:nestedScrollingEnabled="false" />
-
-    </LinearLayout>
-</ScrollView>
+</FrameLayout>

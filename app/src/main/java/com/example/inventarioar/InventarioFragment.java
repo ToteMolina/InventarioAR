@@ -1,6 +1,5 @@
 package com.example.inventarioar;
 
-import android.content.Intent;
 import android.os.Bundle;
 
 import androidx.annotation.NonNull;
@@ -36,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-
 public class InventarioFragment extends Fragment {
 
     private RecyclerView rvInventario;
@@ -63,15 +61,12 @@ public class InventarioFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_inventario, container, false);
     }
 
     @Override
     public void onResume() {
         super.onResume();
-
-        // se reinyectan adaptadores limpios a los menu desplegables
 
         String[] sucursales = {"Almacén", "Metrocentro San Miguel", "Sucursal Centro", "FMO - UES"};
         spFiltroSucursal.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, sucursales));
@@ -102,26 +97,6 @@ public class InventarioFragment extends Fragment {
             NavHostFragment.findNavController(this).navigate(R.id.gestionFragment);
         });
 
-        MaterialButton btnEscanear = view.findViewById(R.id.btnEscanearUniversal);
-
-        // Le damos la orden de abrir la ventana de Realidad Aumentada
-        if (btnEscanear != null) {
-            btnEscanear.setOnClickListener(v -> {
-                Intent intent = new Intent(getContext(), activity_ar_scanner.class);
-
-               
-                android.content.SharedPreferences prefs = requireContext().getSharedPreferences("InventarioPrefs", android.content.Context.MODE_PRIVATE);
-
-                String sucursalKey = prefs.getString("sucursalKey", "sucursal_metrocentro");
-                String sucursalNombre = prefs.getString("sucursalNombre", "Metrocentro San Miguel");
-
-                intent.putExtra("sucursalKey", sucursalKey);
-                intent.putExtra("nombreSucursal", sucursalNombre);
-
-                startActivity(intent);
-            });
-        }
-
         listaProductosMaestra = new ArrayList<>();
         listaProductosFiltrados = new ArrayList<>();
 
@@ -145,23 +120,16 @@ public class InventarioFragment extends Fragment {
                                     .removeValue();
                         })
                         .setNegativeButton("Cancelar", null)
-                        .create(); // 🚨 Cambiamos el .show() por .create() 🚨
+                        .create();
 
-                // 2. Lo mostramos en pantalla
                 dialogoEliminar.show();
 
-                // 3. Detectamos el modo del teléfono (claro u oscuro)
                 int modoPantalla = requireContext().getResources().getConfiguration().uiMode & android.content.res.Configuration.UI_MODE_NIGHT_MASK;
                 boolean esModoOscuro = (modoPantalla == android.content.res.Configuration.UI_MODE_NIGHT_YES);
-
-                // Si es oscuro usamos blanco, si es claro usamos negro
                 int colorTexto = esModoOscuro ? android.graphics.Color.WHITE : android.graphics.Color.BLACK;
 
-                // 4. Pintamos el botón "Cancelar" con el color inteligente
                 dialogoEliminar.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEGATIVE)
                         .setTextColor(colorTexto);
-
-                // 5. Pintamos el botón "Eliminar" de ROJO para advertir al usuario
                 dialogoEliminar.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
                         .setTextColor(android.graphics.Color.parseColor("#D32F2F"));
             }
@@ -169,24 +137,19 @@ public class InventarioFragment extends Fragment {
         rvInventario.setAdapter(adapter);
 
         configurarFiltros();
-
         databaseReference = FirebaseDatabase.getInstance().getReference("Productos");
-
         cargarProductos();
     }
 
     private void configurarFiltros(){
-        // llenar el dropdown de sucursales
         String[] sucursales = {"Almacén", "Metrocentro San Miguel", "Sucursal Centro", "FMO - UES"};
         spFiltroSucursal.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, sucursales));
         spFiltroSucursal.setText("Almacén", false);
 
-        // llenar el dropdown de categorias
         String[] categorias = {"Todas", "Mobiliario", "Electrónica", "Decoración", "Herramientas", "Otros"};
         spFiltroCategoria.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, categorias));
         spFiltroCategoria.setText("Todas", false);
 
-        // llenar el dropdown de ordenamiento
         String[] ordenes = {"Más antiguos", "Más recientes", "Nombre (A-Z)", "Nombre (Z-A)", "Precio (Menor-Mayor)", "Precio (Mayor-Menor)"};
         spFiltroorden.setAdapter(new ArrayAdapter<>(requireContext(), android.R.layout.simple_dropdown_item_1line, ordenes));
         spFiltroorden.setText("Más antiguos", false);
@@ -197,14 +160,10 @@ public class InventarioFragment extends Fragment {
 
         etBuscarProducto.addTextChangedListener(new TextWatcher() {
             @Override
-            public void afterTextChanged(Editable editable) {
-
-            }
+            public void afterTextChanged(Editable editable) {}
 
             @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
+            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {}
 
             @Override
             public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
@@ -237,15 +196,12 @@ public class InventarioFragment extends Fragment {
         adapter.setSucursalFiltroActual(sucursalKey.isEmpty() ? "Almacén" : sucursalKey);
 
         for (Producto p : listaProductosMaestra){
-            // filtro por nombre
             if (!busqueda.isEmpty() && !p.getNombre().toLowerCase().contains(busqueda)){
-                continue; // si no coincide salta al otro producto
+                continue;
             }
-            // filtro por categoira
             if (!categoriaSeleccionada.equals("Todas") && !p.getCategoria().equals(categoriaSeleccionada)){
                 continue;
             }
-            // filtro por sucursal
             if (!sucursalSeleccionada.equals("Almacén")){
                 if (p.getStockPorSucursal() == null || !p.getStockPorSucursal().containsKey(sucursalKey) || p.getStockPorSucursal().get(sucursalKey) <= 0){
                     continue;
@@ -254,7 +210,6 @@ public class InventarioFragment extends Fragment {
             listaProductosFiltrados.add(p);
         }
 
-        // ordenar los resultados
         Collections.sort(listaProductosFiltrados, (p1, p2)->{
             if (ordenSeleccionado.equals("Más recientes")){
                 return p2.getId().compareTo(p1.getId());
@@ -267,7 +222,6 @@ public class InventarioFragment extends Fragment {
             } else if (ordenSeleccionado.equals("Precio (Mayor-Menor)")){
                 return Double.compare(p2.getPrecio(), p1.getPrecio());
             } else {
-                // nombre a-z
                 return p1.getNombre().compareToIgnoreCase(p2.getNombre());
             }
         });

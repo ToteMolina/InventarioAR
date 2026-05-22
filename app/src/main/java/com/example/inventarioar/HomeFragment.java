@@ -2,6 +2,7 @@ package com.example.inventarioar;
 
 import android.Manifest;
 import android.annotation.SuppressLint;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -39,10 +40,9 @@ import java.util.List;
 public class HomeFragment extends Fragment {
 
     private TextView tvNombreSucursal, tvDistancia, tvTituloProductos, tvTotalProductos, tvStockBajo;
-    private MaterialButton btnObtenerUbicacion;
+    private MaterialButton btnObtenerUbicacion, btnEscanearUniversal;
     private RecyclerView rvProductosRecientes;
 
-    // es la API de google services
     private FusedLocationProviderClient fusedLocationProviderClient;
     private String sucursalActualKey = "";
 
@@ -53,8 +53,6 @@ public class HomeFragment extends Fragment {
     private static final double LATITUD_FMO = 13.4402428;
     private static final double LONGITUD_FMO = -88.1585955;
 
-
-    // lanzador encargado de recibir la respuesta del permiso
     private ActivityResultLauncher<String> requestPermissionLauncher;
 
     public HomeFragment() {
@@ -69,9 +67,9 @@ public class HomeFragment extends Fragment {
                 new ActivityResultContracts.RequestPermission(),
                 isGranted -> {
                     if (isGranted){
-                        obtenerUbicacion(); // el usuario le dió a permitir
+                        obtenerUbicacion();
                     } else {
-                        Toast.makeText(getContext(), "Se requiere el permiso de de ubicación para esta función", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Se requiere el permiso de ubicación para esta función", Toast.LENGTH_SHORT).show();
                         tvNombreSucursal.setText("Permiso denegado");
                     }
                 });
@@ -80,7 +78,6 @@ public class HomeFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.fragment_home, container, false);
     }
 
@@ -92,6 +89,7 @@ public class HomeFragment extends Fragment {
         tvDistancia = view.findViewById(R.id.tvDistancia);
         tvTituloProductos = view.findViewById(R.id.tvTituloProductos);
         btnObtenerUbicacion = view.findViewById(R.id.btnObtenerUbicacion);
+        btnEscanearUniversal = view.findViewById(R.id.btnEscanearUniversal);
         rvProductosRecientes = view.findViewById(R.id.rvProductosRecientes);
         tvTotalProductos = view.findViewById(R.id.tvTotalProductos);
         tvStockBajo = view.findViewById(R.id.tvStockBajo);
@@ -100,6 +98,22 @@ public class HomeFragment extends Fragment {
         fusedLocationProviderClient = LocationServices.getFusedLocationProviderClient(requireActivity());
 
         btnObtenerUbicacion.setOnClickListener(v->verificarPermisoYObtenerUbicacion());
+
+        // le damos la orden de abrir la ventana de AR
+        if (btnEscanearUniversal != null) {
+            btnEscanearUniversal.setOnClickListener(v -> {
+                Intent intent = new Intent(getContext(), activity_ar_scanner.class);
+
+                SharedPreferences prefs = requireContext().getSharedPreferences("InventarioPrefs", android.content.Context.MODE_PRIVATE);
+                String sucursalKey = prefs.getString("sucursalKey", "sucursal_metrocentro");
+                String sucursalNombre = prefs.getString("sucursalNombre", "Metrocentro San Miguel");
+
+                intent.putExtra("sucursalKey", sucursalKey);
+                intent.putExtra("nombreSucursal", sucursalNombre);
+
+                startActivity(intent);
+            });
+        }
 
         String keyGuardada = ((MainActivity) requireActivity()).sucursalKey;
         String nombreGuardado = ((MainActivity) requireActivity()).sucursalNombre;
@@ -115,11 +129,9 @@ public class HomeFragment extends Fragment {
     }
 
     private void verificarPermisoYObtenerUbicacion(){
-        // se encarga de verificar el estado del permiso actual
         if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED){
             obtenerUbicacion();
         } else {
-            // hace que aparezca la ventana emergente
             requestPermissionLauncher.launch(Manifest.permission.ACCESS_FINE_LOCATION);
         }
     }
@@ -129,7 +141,6 @@ public class HomeFragment extends Fragment {
         tvNombreSucursal.setText("Buscando...");
         tvDistancia.setText("");
 
-        // le pedimos las coordenadas a google
         fusedLocationProviderClient.getCurrentLocation(Priority.PRIORITY_HIGH_ACCURACY, null)
                 .addOnSuccessListener(requireActivity(), location -> {
                     if (location == null) {
@@ -181,7 +192,7 @@ public class HomeFragment extends Fragment {
                         tvDistancia.setText(String.format("%.1f km de distancia", distancia / 1000f));
                     }
 
-                   SharedPreferences prefs = requireContext().getSharedPreferences("InventarioPrefs", android.content.Context.MODE_PRIVATE);
+                    SharedPreferences prefs = requireContext().getSharedPreferences("InventarioPrefs", android.content.Context.MODE_PRIVATE);
                     prefs.edit()
                             .putString("sucursalKey", sucursalActualKey)
                             .putString("sucursalNombre", nombreSucursal)
@@ -223,7 +234,6 @@ public class HomeFragment extends Fragment {
                         tvStockBajo.setText(String.valueOf(contadorStockBajo));
                         tvTituloProductos.setText("Productos recientes en: " + nombreSucursal);
 
-                        // mostrar sólo los últimos 3
                         List<Producto> recientes = todos.size() > 3 ? todos.subList(todos.size() - 3, todos.size()) : todos;
                         rvProductosRecientes.setAdapter(new ProductoHomeAdapter(recientes, sucursalKey));
                     }
